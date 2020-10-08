@@ -63,6 +63,7 @@ class Region(object):
         is_self_dungeon_restricted = False
         is_dungeon_restricted = False
         is_overworld_restricted = False
+        is_region_restricted = None
         if item.map or item.compass:
             is_self_dungeon_restricted = self.world.shuffle_mapcompass in ['dungeon', 'vanilla']
             is_dungeon_restricted = self.world.shuffle_mapcompass == 'any_dungeon'
@@ -74,6 +75,7 @@ class Region(object):
         elif item.type == 'FortressSmallKey':
             is_dungeon_restricted = self.world.shuffle_fortresskeys == 'any_dungeon'
             is_overworld_restricted = self.world.shuffle_fortresskeys == 'overworld'
+            is_region_restricted = "Gerudo Fortress" if self.world.shuffle_fortresskeys == 'fortress' else None
         elif item.type == 'BossKey':
             is_self_dungeon_restricted = self.world.shuffle_bosskeys in ['dungeon', 'vanilla']
             is_dungeon_restricted = self.world.shuffle_bosskeys == 'any_dungeon'
@@ -91,6 +93,9 @@ class Region(object):
 
         if is_overworld_restricted and not manual:
             return not self.dungeon
+
+        if is_region_restricted and not manual:
+            return self.name == is_region_restricted
 
         if item.name == 'Triforce Piece':
             return item.world.id == self.world.id

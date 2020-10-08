@@ -2774,24 +2774,30 @@ setting_infos = [
         default        = 'vanilla',
         disabled_default = 'remove',
         choices        = {
-            'vanilla':     'Vanilla Locations',
-            'overworld':   'Overworld Only',
-            'any_dungeon': 'Any Dungeon',
-            'keysanity':   'Anywhere (Keysanity)',
+            'vanilla':     "Vanilla Locations",
+            'fortress':    "Gerudo's Fortress Region",
+            'overworld':   "Overworld Only",
+            'any_dungeon': "Any Dungeon",
+            'keysanity':   "Anywhere (Keysanity)",
         },
         gui_tooltip    = '''\
-            'Vanilla': Gerudo Fortress Keys will appear in their
+            "Vanilla": Gerudo Fortress Keys will appear in their
             vanilla location, dropping from fighting Gerudo guards
             that attack when trying to free the jailed carpenters.
             
-            'Overworld Only': Gerudo Fortress Keys can only appear
+            "Gerudo's Fortress Region": Gerudo Fortress Keys can only
+            appear within the Gerudo's Fortress region, including their
+            vanilla locations, Horseback Archery, the rooftop chest,
+            or the two gold skulltulas (if Tokensanity is enabled).
+             
+            "Overworld Only": Gerudo Fortress Keys can only appear
              outside of dungeons.
             
-            'Dungeons Only': Gerudo Fortress Keys can only appear
+            "Dungeons Only": Gerudo Fortress Keys can only appear
              inside of dungeons.
 
-            'Anywhere': Gerudo Fortress Keys can appear anywhere
-            in the world.
+            "Anywhere": Gerudo Fortress Keys can appear
+            anywhere in the world.
         ''',
         shared         = True,
         gui_params     = {

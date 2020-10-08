@@ -1053,7 +1053,7 @@ def get_pool_core(world):
         placed_items['GF North F2 Carpenter'] = 'Recovery Heart'
         placed_items['GF South F1 Carpenter'] = 'Recovery Heart'
         placed_items['GF South F2 Carpenter'] = 'Recovery Heart'
-    elif world.shuffle_fortresskeys in ['any_dungeon', 'overworld', 'keysanity']:
+    elif world.shuffle_fortresskeys != 'vanilla':
         if world.gerudo_fortress == 'fast':
             pool.append('Small Key (Gerudo Fortress)')
             placed_items['GF North F2 Carpenter'] = 'Recovery Heart'
