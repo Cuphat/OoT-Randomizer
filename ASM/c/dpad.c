@@ -18,8 +18,8 @@ void handle_dpad() {
 
     pad_t pad_pressed = z64_game.common.input[0].pad_pressed;
 
-    if (CAN_USE_DPAD && DISPLAY_DPAD){
-        if(z64_file.link_age == 0) {
+    if (CAN_USE_DPAD && DISPLAY_DPAD) {
+        if (z64_file.link_age == 0) {
             if (pad_pressed.dl && z64_file.iron_boots) {
                 if (z64_file.equip_boots == 2) z64_file.equip_boots = 1;
                 else z64_file.equip_boots = 2;
@@ -34,7 +34,14 @@ void handle_dpad() {
                 z64_playsfx(0x835, (z64_xyzf_t*)0x80104394, 0x04, (float*)0x801043A0, (float*)0x801043A0, (float*)0x801043A8);
             }
         }
-        if (pad_pressed.dd && CAN_USE_OCARINA){
+
+        if (z64_file.link_age == 1) {
+            if (pad_pressed.dr && CAN_USE_CHILD_TRADE) {
+                z64_usebutton(&z64_game,&z64_link,z64_file.items[0x17], 2);
+            }
+        }
+
+        if (pad_pressed.dd && CAN_USE_OCARINA) {
             z64_usebutton(&z64_game,&z64_link,z64_file.items[0x07], 2);
         }
     }
@@ -74,8 +81,17 @@ void draw_dpad() {
                 sprite_draw(db, &items_sprite, 0, 285, 66, 12, 12);
             }
         }
-        if (z64_file.items[0x07] == 0x07 || z64_file.items[0x07] == 0x08){
+
+        if (z64_file.items[0x17] >= 0x21 && z64_file.items[0x17] <= 0x2B && z64_file.link_age == 1) {
+            if(alpha==0xFF && !CAN_USE_CHILD_TRADE) gDPSetPrimColor(db->p++, 0, 0, 0xFF, 0xFF, 0xFF, 0x46);
+            else gDPSetPrimColor(db->p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
+            sprite_load(db, &items_sprite, z64_file.items[0x17], 1);
+            sprite_draw(db, &items_sprite, 0, 285, 66, 12, 12);
+        }
+
+        if (z64_file.items[0x07] == 0x07 || z64_file.items[0x07] == 0x08) {
             if(alpha==0xFF && !CAN_USE_OCARINA) gDPSetPrimColor(db->p++, 0, 0, 0xFF, 0xFF, 0xFF, 0x46);
+            else gDPSetPrimColor(db->p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
             sprite_load(db, &items_sprite, z64_file.items[0x07], 1);
             sprite_draw(db, &items_sprite, 0, 273, 77, 12,12);
         }
