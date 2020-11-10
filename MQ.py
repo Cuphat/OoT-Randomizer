@@ -44,7 +44,7 @@
 # As such, if the file moves, the patch will break.
 
 from Utils import data_path
-from Rom import LocalRom
+from Rom import Rom
 import json
 from struct import pack, unpack
 
@@ -70,7 +70,7 @@ class File(object):
             remap = "{0:x}".format(self.remap)
         return "{0}: {1:x} {2:x}, remap {3}".format(self.name, self.start, self.end, remap)
 
-    def relocate(self, rom:LocalRom):
+    def relocate(self, rom:Rom):
         if self.remap is None:
             return
 
@@ -85,14 +85,14 @@ class File(object):
 
 
 class CollisionMesh(object):
-    def __init__(self, rom:LocalRom, start, offset):
+    def __init__(self, rom:Rom, start, offset):
         self.offset = offset
         self.poly_addr = rom.read_int32(start + offset + 0x18)
         self.polytypes_addr = rom.read_int32(start + offset + 0x1C)
         self.camera_data_addr = rom.read_int32(start + offset + 0x20)
         self.polytypes = (self.poly_addr - self.polytypes_addr) // 8
 
-    def write_to_scene(self, rom:LocalRom, start):
+    def write_to_scene(self, rom:Rom, start):
         addr = start + self.offset + 0x18
         rom.write_int32s(addr, [self.poly_addr, self.polytypes_addr, self.camera_data_addr])
 
@@ -111,7 +111,7 @@ class Icon(object):
         self.count = data["Count"];
         self.points = [IconPoint(x) for x in data["IconPoints"]]
 
-    def write_to_minimap(self, rom:LocalRom, addr):
+    def write_to_minimap(self, rom:Rom, addr):
         rom.write_sbyte(addr, self.icon)
         rom.write_byte(addr + 1,  self.count)
         cur = 2
@@ -119,7 +119,7 @@ class Icon(object):
             p.write_to_minimap(rom, addr + cur)
             cur += 0x03
 
-    def write_to_floormap(self, rom:LocalRom, addr):
+    def write_to_floormap(self, rom:Rom, addr):
         rom.write_int16(addr, self.icon)
         rom.write_int32(addr + 0x10, self.count)
 
@@ -135,12 +135,12 @@ class IconPoint(object):
         self.x = point["x"]
         self.y = point["y"]
 
-    def write_to_minimap(self, rom:LocalRom, addr):
+    def write_to_minimap(self, rom:Rom, addr):
         rom.write_sbyte(addr, self.flag)
         rom.write_byte(addr+1, self.x)
         rom.write_byte(addr+2, self.y)
 
-    def write_to_floormap(self, rom:LocalRom, addr):
+    def write_to_floormap(self, rom:Rom, addr):
         rom.write_int16(addr, self.flag)
         rom.write_f32(addr + 4, float(self.x))
         rom.write_f32(addr + 8, float(self.y))
@@ -161,7 +161,7 @@ class Scene(object):
             self.paths.append(item['Points'])
 
 
-    def write_data(self, rom:LocalRom):
+    def write_data(self, rom:Rom):
         
         # write floormap and minimap data
         self.write_map_data(rom)
@@ -216,7 +216,7 @@ class Scene(object):
             cur += 0x08
 
 
-    def write_map_data(self, rom:LocalRom):
+    def write_map_data(self, rom:Rom):
         if self.id >= 10:
             return
 
@@ -255,7 +255,7 @@ class Scene(object):
                 cur += 0x26
 
 
-    def patch_mesh(self, rom:LocalRom, mesh:CollisionMesh):
+    def patch_mesh(self, rom:Rom, mesh:CollisionMesh):
         start = self.file.start
         
         final_cams = []
@@ -321,7 +321,7 @@ class Scene(object):
         mesh.write_to_scene(rom, self.file.start)
 
 
-    def write_cam_data(self, rom:LocalRom, addr, cam_data):
+    def write_cam_data(self, rom:Rom, addr, cam_data):
 
         for item in cam_data:
             data, pos = item
@@ -331,7 +331,7 @@ class Scene(object):
 
     # appends path data to the end of the rom
     # returns segment address to path data
-    def append_path_data(self, rom:LocalRom):
+    def append_path_data(self, rom:Rom):
         start = self.file.start
         cur = self.file.end
         records = []
@@ -364,7 +364,7 @@ class Room(object):
         self.objects = [int(x, 16) for x in room['Objects']]
         self.actors = [convert_actor_data(x) for x in room['Actors']]
 
-    def write_data(self, rom:LocalRom):
+    def write_data(self, rom:Rom):
 
         # move file to remap address
         self.file.relocate(rom)
@@ -398,7 +398,7 @@ class Room(object):
         update_dmadata(rom, self.file)
         
 
-    def append_object_data(self, rom:LocalRom, objects):
+    def append_object_data(self, rom:Rom, objects):
         offset = self.file.end - self.file.start
         cur = self.file.end
         rom.write_int16s(cur, objects)
@@ -408,7 +408,7 @@ class Room(object):
         return offset
 
 
-def patch_files(rom:LocalRom, mq_scenes:list):
+def patch_files(rom:Rom, mq_scenes:list):
     
     data = get_json()
     scenes = [Scene(x) for x in data]
@@ -442,7 +442,7 @@ def patch_ice_cavern_scene_header(rom):
     rom.write_int32s(0x2BEB038, [0x0D000000, 0x02000000])
 
 
-def patch_spirit_temple_mq_room_6(rom:LocalRom, room_addr):
+def patch_spirit_temple_mq_room_6(rom:Rom, room_addr):
     cur = room_addr
 
     actor_list_addr = 0
@@ -518,16 +518,16 @@ def verify_remap(scenes):
             print("{0} - {1}".format(result, file))
 
 
-def update_dmadata(rom:LocalRom, file:File):
+def update_dmadata(rom:Rom, file:File):
     key, start, end = file.dma_key, file.start, file.end
     rom.update_dmadata_record(key, start, end)
 
-def update_scene_table(rom:LocalRom, sceneId, start, end):
+def update_scene_table(rom:Rom, sceneId, start, end):
     cur = sceneId * 0x14 + SCENE_TABLE
     rom.write_int32s(cur, [start, end])
 
 
-def write_actor_data(rom:LocalRom, cur, actors):
+def write_actor_data(rom:Rom, cur, actors):
     for actor in actors:
         rom.write_int16s(cur, actor)
         cur += 0x10

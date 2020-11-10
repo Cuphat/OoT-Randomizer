@@ -42,11 +42,11 @@ def start():
     logging.basicConfig(format='%(message)s', level=loglevel)
 
     logger = logging.getLogger('')
-    if not settings.check_version:
-        try:
-            version_error = check_version(settings.checked_version)
-        except VersionError as e:
-            logger.warning(str(e))
+    #if not settings.check_version:
+    #    try:
+    #        version_error = check_version(settings.checked_version)
+    #    except VersionError as e:
+    #        logger.warning(str(e))
 
     if gui:
         guiMain(settings)

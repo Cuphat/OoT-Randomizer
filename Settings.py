@@ -128,7 +128,9 @@ class Settings():
 
     def get_numeric_seed(self):
         # salt seed with the settings, and hash to get a numeric seed
-        full_string = self.settings_string + __version__ + self.seed
+        #full_string = self.settings_string + __version__ + self.seed
+        # hardcode the old version number for the 3.0.0 source code release
+        full_string = self.settings_string + '2.23.6 f.LUM' + self.seed
         return int(hashlib.sha256(full_string.encode('utf-8')).hexdigest(), 16)
 
     def sanatize_seed(self):
@@ -227,7 +229,7 @@ setting_infos = [
             'help': '''\
                     Use to select world to generate when there are multiple worlds.
                     ''',
-            'type': int}),
+        'type': int}),
     Setting_Info('create_spoiler', bool, 1, True, 
         {
             'help': 'Output a Spoiler File',
@@ -252,6 +254,7 @@ setting_infos = [
                     Create a compressed version of the output ROM file.
                     True: Compresses. Improves stability. Will take longer to generate
                     False: Uncompressed. Unstable. Faster generation
+                    Patch: Patch file. No ROM, but used to send the patch data
                     None: No ROM Output. Creates spoiler log only
                     ''',
         },
@@ -264,6 +267,7 @@ setting_infos = [
             'options': {
                 'Compressed [Stable]': 'True',
                 'Uncompressed [Crashes]': 'False',
+                'Patch File': 'Patch',
                 'No ROM Output': 'None',
             },
             'tooltip':'''\
@@ -271,6 +275,9 @@ setting_infos = [
                       but subsequent generations will be quick. It is highly 
                       recommended to compress or the game will crash 
                       frequently except on real N64 hardware.
+
+                      Patch files are used to send the patched data to other
+                      people without sending the ROM file.
                       '''
         }),
     Setting_Info('open_forest', bool, 1, True, 

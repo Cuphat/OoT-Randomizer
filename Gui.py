@@ -474,7 +474,7 @@ def guiMain(settings=None):
             if dialog.result:
                 guivars['checked_version'].set(ESVersion)
 
-    mainWindow.after(1000, gui_check_version)
+    #mainWindow.after(1000, gui_check_version)
     mainWindow.mainloop()
 
     # save settings on close

@@ -68,6 +68,23 @@ def close_console():
         except Exception:
             pass
 
+
+def get_version_bytes(a):
+    version_bytes = [0x00, 0x00, 0x00]
+    if not a:
+        return version_bytes;
+    sa = a.replace('v', '').replace(' ', '.').split('.')
+
+    for i in range(0,3):
+        try:
+            version_byte = int(sa[i])
+        except ValueError:
+            break
+        version_bytes[i] = version_byte
+
+    return version_bytes
+
+
 def compare_version(a, b):
     if not a and not b:
         return 0

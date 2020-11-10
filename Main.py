@@ -9,10 +9,11 @@ import time
 import os, os.path
 import sys
 import struct
+import zipfile
 
 from BaseClasses import World, CollectionState, Item, Spoiler
 from EntranceShuffle import link_entrances
-from Rom import LocalRom
+from Rom import Rom
 from Patches import patch_rom
 from Regions import create_regions
 from Dungeons import create_dungeons
@@ -23,6 +24,7 @@ from Hints import buildGossipHints
 from Utils import default_output_path, is_bundled, subprocess_args
 from version import __version__
 from OcarinaSongs import verify_scarecrow_song_str
+from N64Patch import create_patch_file, apply_patch_file
 
 class dummy_window():
     def __init__(self):
@@ -54,7 +56,10 @@ def main(settings, window=dummy_window()):
     if settings.world_count < 1 or settings.world_count > 31:
         raise Exception('World Count must be between 1 and 31')
     if settings.player_num > settings.world_count or settings.player_num < 1:
-        raise Exception('Player Num must be between 1 and %d' % settings.world_count)
+        if settings.compress_rom not in ['None', 'Patch']:
+            raise Exception('Player Num must be between 1 and %d' % settings.world_count)
+        else:
+            settings.player_num = 1
 
     for i in range(0, settings.world_count):
         worlds.append(World(settings))
@@ -66,7 +71,7 @@ def main(settings, window=dummy_window()):
     # we load the rom before creating the seed so that error get caught early
     if settings.compress_rom != 'None':
         window.update_status('Loading ROM')
-        rom = LocalRom(settings)
+        rom = Rom(settings.rom)
 
     window.update_status('Creating the Worlds')
     for id, world in enumerate(worlds):
@@ -132,7 +137,43 @@ def main(settings, window=dummy_window()):
 
     output_dir = default_output_path(settings.output_dir)
 
-    if settings.compress_rom != 'None':
+    if settings.compress_rom == 'Patch':
+        rng_state = random.getstate()
+        file_list = []
+        window.update_progress(65)
+        for world in worlds:
+            if settings.world_count > 1:
+                window.update_status('Patching ROM: Player %d' % (world.id + 1))
+                patchfilename = '%sP%d.zpf' % (outfilebase.rsplit('P', 1)[0], world.id + 1)
+            else:
+                window.update_status('Patching ROM')
+                patchfilename = '%s.zpf' % outfilebase
+
+            random.setstate(rng_state)
+            patch_rom(world, rom)
+            window.update_progress(65 + 20*(world.id + 1)/settings.world_count)
+
+            window.update_status('Creating Patch File')
+            output_path = os.path.join(output_dir, patchfilename)
+            file_list.append(patchfilename)
+            rom.update_header()
+            create_patch_file(rom, output_path)
+            rom.restore()
+            window.update_progress(65 + 30*(world.id + 1)/settings.world_count)
+
+        if settings.world_count > 1:
+            window.update_status('Creating Patch Archive')
+            output_path = os.path.join(output_dir, '%s.zpfz' % outfilebase.rsplit('P', 1)[0])
+            with zipfile.ZipFile(output_path, mode="w") as patch_archive:
+                for index, file in enumerate(file_list):
+                    file_path = os.path.join(output_dir, file)
+                    patch_archive.write(file_path, 'P%d.zpf' % (index + 1), compress_type=zipfile.ZIP_DEFLATED)
+            for file in file_list:
+                os.remove(os.path.join(output_dir, file))
+        logger.info("Created patchfile at: %s" % output_path)
+        window.update_progress(95)
+
+    elif settings.compress_rom != 'None':
         window.update_status('Patching ROM')
         patch_rom(worlds[settings.player_num - 1], rom)
         window.update_progress(65)
