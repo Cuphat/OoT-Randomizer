@@ -25,7 +25,9 @@ def output_path(path):
         return os.path.join(output_path.cached_path, path)
 
     if not is_bundled():
-        output_path.cached_path = '.'
+        output_path.cached_path = local_path('Output')
+        if not os.path.exists(output_path.cached_path):
+            os.mkdir(output_path.cached_path)
         return os.path.join(output_path.cached_path, path)
     else:
         # has been packaged, so cannot use CWD for output.
