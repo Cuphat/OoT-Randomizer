@@ -20,7 +20,7 @@ from Utils import output_path
 __version__ = '2.0.0'
 
 def main(args, seed=None):
-    start = time.clock()
+    start = time.process_time()
 
     # initialize the world
     world = World(args.bridge, args.open_forest, args.open_door_of_time, not args.nodungeonitems, args.beatableonly, args.hints, args.fast_ganon, [args.kokiricolor, args.goroncolor, args.zoracolor], args.healthSFX)
@@ -92,7 +92,7 @@ def main(args, seed=None):
         world.spoiler.to_file(output_path('%s_Spoiler.txt' % outfilebase))
 
     logger.info('Done. Enjoy.')
-    logger.debug('Total Time: %s', time.clock() - start)
+    logger.debug('Total Time: %s', time.process_time() - start)
 
     return world
 
