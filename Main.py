@@ -20,7 +20,7 @@ from Utils import default_output_path
 from version import __version__
 
 def main(settings):
-    start = time.clock()
+    start = time.process_time()
 
     # initialize the world
 
@@ -96,7 +96,7 @@ def main(settings):
         worlds[settings.player_num - 1].spoiler.to_file(os.path.join(output_dir, '%s_Spoiler.txt' % outfilebase))
     os.remove('hints.txt')
     logger.info('Done. Enjoy.')
-    logger.debug('Total Time: %s', time.clock() - start)
+    logger.debug('Total Time: %s', time.process_time() - start)
 
     return worlds[settings.player_num - 1]
 
