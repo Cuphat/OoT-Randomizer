@@ -10,14 +10,14 @@ import time
 from BaseClasses import World, CollectionState, Item
 from Regions import create_regions
 from EntranceShuffle import link_entrances
-from Rom import patch_rom, LocalRom
+from Rom import patch_rom, Rom
 from Rules import set_rules
 from Dungeons import create_dungeons, fill_dungeons_restrictive
 from Fill import distribute_items_restrictive
 from ItemList import generate_itempool
 from Utils import output_path
-
-__version__ = '1.0.0'
+from N64Patch import create_patch_file
+from version import __version__
 
 def main(args, seed=None):
     start = time.process_time()
@@ -70,7 +70,7 @@ def main(args, seed=None):
     outfilebase = 'OoT_%s%s%s%s_%s' % (world.bridge, "-openforest" if world.open_forest else "", "-opendoor" if world.open_door_of_time else "", "-beatableonly" if world.check_beatable_only else "",  world.seed)
 
     if not args.suppress_rom:
-        rom = LocalRom(args.rom)
+        rom = Rom(args.rom)
         patch_rom(world, rom)
         rom.write_to_file(output_path('%s.z64' % outfilebase))
         if args.compress_rom:
@@ -83,6 +83,9 @@ def main(args, seed=None):
                 subprocess.call(["Compress/Compress.out", ('%s.z64' % outfilebase)])
             else:
                 logger.info('OS not supported for compression')
+
+        create_patch_file(rom, output_path('%s.zpf' % outfilebase))
+        rom.restore()
 
     if args.create_spoiler:
         world.spoiler.to_file(output_path('%s_Spoiler.txt' % outfilebase))
