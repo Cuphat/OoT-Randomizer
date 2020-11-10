@@ -1,2 +1,2 @@
 #TOURNAMENT VERSION WITH HINTS. THIS VERSION IS NOT THE SAME AS THE COMMIT IN THE TR FORK
-__version__ = 'OoTR Hints T.sep.19'
+__version__ = '2.13.16 Tournament Build ZPF Update'

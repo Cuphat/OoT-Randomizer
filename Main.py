@@ -10,13 +10,14 @@ import os
 
 from BaseClasses import World, CollectionState, Item
 from EntranceShuffle import link_entrances
-from Rom import patch_rom, LocalRom
+from Rom import patch_rom, Rom
 from Regions import create_regions
 from Dungeons import create_dungeons
 from Rules import set_rules
 from Fill import distribute_items_restrictive
 from ItemList import generate_itempool
 from Utils import default_output_path
+from N64Patch import create_patch_file
 from version import __version__
 
 def main(settings):
@@ -75,7 +76,7 @@ def main(settings):
     output_dir = default_output_path(settings.output_dir)
 
     if not settings.suppress_rom:
-        rom = LocalRom(settings)
+        rom = Rom(settings.rom)
         patch_rom(worlds[settings.player_num - 1], rom)
 
         rom_path = os.path.join(output_dir, '%s.z64' % outfilebase)
@@ -91,6 +92,9 @@ def main(settings):
                 subprocess.call(["Compress/Compress.out", ('%s.z64' % outfilebase)])
             else:
                 logger.info('OS not supported for compression')
+
+        create_patch_file(rom, os.path.join(output_dir, '%s.zpf' % outfilebase))
+        rom.restore()
 
     if settings.create_spoiler:
         worlds[settings.player_num - 1].spoiler.to_file(os.path.join(output_dir, '%s_Spoiler.txt' % outfilebase))
