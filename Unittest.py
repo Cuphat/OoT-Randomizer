@@ -7,7 +7,7 @@ import os
 import random
 import unittest
 
-from ItemList import item_table
+from ItemList import item_table, ItemClass
 from ItemPool import remove_junk_items, item_groups
 from LocationList import location_groups, location_is_viewable
 from Main import main, resolve_settings, build_world_graphs
@@ -26,7 +26,7 @@ never_suffix = ['Capacity']
 never = {
     'Bunny Hood', 'Recovery Heart', 'Milk', 'Ice Arrows', 'Ice Trap',
     'Double Defense', 'Biggoron Sword', 'Giants Knife',
-} | {item for item, (t, adv, _, special) in item_table.items() if adv is False
+} | {item for item, (t, item_class, _, special) in item_table.items() if item_class == ItemClass.Priority
      or any(map(item.startswith, never_prefix)) or any(map(item.endswith, never_suffix))}
 
 # items required at most once, specifically things with multiple possible names

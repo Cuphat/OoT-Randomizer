@@ -1,4 +1,4 @@
-from ItemList import item_table
+from ItemList import item_table, ItemClass
 
 
 class ItemInfo(object):
@@ -11,15 +11,16 @@ class ItemInfo(object):
     def __init__(self, name='', event=False):
         if event:
             type = 'Event'
-            progressive = True
+            item_class = ItemClass.Advancement
             itemID = None
             special = None
         else:
-            (type, progressive, itemID, special) = item_table[name]
+            (type, item_class, itemID, special) = item_table[name]
 
         self.name = name
-        self.advancement = (progressive == True)
-        self.priority = (progressive == False)
+        self.advancement = (item_class == ItemClass.Advancement)
+        self.priority = (item_class == ItemClass.Priority)
+        self.junk = (item_class == ItemClass.Junk)
         self.type = type
         self.special = special or {}
         self.index = itemID
@@ -56,6 +57,7 @@ class Item(object):
         self.looks_like_item = None
         self.advancement = self.info.advancement
         self.priority = self.info.priority
+        self.junk = self.info.junk
         self.type = self.info.type
         self.special = self.info.special
         self.index = self.info.index

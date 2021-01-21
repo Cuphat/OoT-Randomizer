@@ -4,7 +4,7 @@ import random
 from itertools import chain
 from Utils import random_choices
 from Item import ItemFactory
-from ItemList import item_table
+from ItemList import item_table, ItemClass
 from LocationList import location_groups
 from decimal import Decimal, ROUND_HALF_UP
 
@@ -692,7 +692,7 @@ item_groups = {
     'NonWarpSong': songlist[0:6],
     'WarpSong': songlist[6:],
     'HealthUpgrade': ('Heart Container', 'Piece of Heart'),
-    'ProgressItem': [name for (name, data) in item_table.items() if data[0] == 'Item' and data[1]],
+    'ProgressItem': [name for (name, data) in item_table.items() if data[0] == 'Item' and data[1] == ItemClass.Advancement],
     'DungeonReward': dungeon_rewards,
 
     'ForestFireWater': ('Forest Medallion', 'Fire Medallion', 'Water Medallion'),
