@@ -11,8 +11,8 @@ extern uint8_t CFG_DISPLAY_DPAD;
 typedef void(*playsfx_t)(uint16_t sfx, z64_xyzf_t *unk_00_, int8_t unk_01_ , float *unk_02_, float *unk_03_, float *unk_04_);
 typedef void(*usebutton_t)(z64_game_t *game, z64_link_t *link, uint8_t item, uint8_t button);
 
-#define z64_playsfx   ((playsfx_t)      0x800C806C)
-#define z64_usebutton ((usebutton_t)    0x8038C9A0)
+#define z64_playsfx   ((playsfx_t)       0x800C806C)
+#define z64_usebutton ((usebutton_t)     0x8038C9A0)
 
 void handle_dpad() {
 
@@ -39,6 +39,14 @@ void handle_dpad() {
             if (pad_pressed.dr && CAN_USE_CHILD_TRADE) {
                 z64_usebutton(&z64_game,&z64_link,z64_file.items[Z64_SLOT_CHILD_TRADE], 2);
             }
+
+            if (pad_pressed.dl && CAN_USE_BEANS) {
+                //z64_link.unk_00_[5] = 0x2E;
+                //z64_link.unk_00_[6] = 0x10;
+                //z64_link.unk_00_[8] = 0x2E;
+                //z64_link.exchange_item_id = 0x04;
+                z64_usebutton(&z64_game,&z64_link,z64_file.items[Z64_SLOT_BEANS], 2);
+            }
         }
 
         if (pad_pressed.dd && CAN_USE_OCARINA) {
@@ -53,7 +61,7 @@ void draw_dpad() {
         gDPPipeSync(db->p++);
         gDPSetCombineMode(db->p++, G_CC_MODULATEIA_PRIM, G_CC_MODULATEIA_PRIM);
         uint16_t alpha = z64_game.hud_alpha_channels.minimap;
-        
+
         if (alpha == 0xAA) alpha = 0xFF;
         gDPSetPrimColor(db->p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
         sprite_load(db, &dpad_sprite, 0, 1);
@@ -87,6 +95,13 @@ void draw_dpad() {
             else gDPSetPrimColor(db->p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
             sprite_load(db, &items_sprite, z64_file.items[Z64_SLOT_CHILD_TRADE], 1);
             sprite_draw(db, &items_sprite, 0, 285, 66, 12, 12);
+        }
+
+        if (z64_file.items[Z64_SLOT_BEANS] == Z64_ITEM_BEANS && z64_file.link_age == 1) {
+            if(alpha==0xFF && !CAN_USE_BEANS) gDPSetPrimColor(db->p++, 0, 0, 0xFF, 0xFF, 0xFF, 0x46);
+            else gDPSetPrimColor(db->p++, 0, 0, 0xFF, 0xFF, 0xFF, alpha);
+            sprite_load(db, &items_sprite, z64_file.items[Z64_SLOT_BEANS], 1);
+            sprite_draw(db, &items_sprite, 0, 260, 66, 12, 12);
         }
 
         if (z64_file.items[Z64_SLOT_OCARINA] == Z64_ITEM_FAIRY_OCARINA || z64_file.items[Z64_SLOT_OCARINA] == Z64_ITEM_OCARINA_OF_TIME) {
