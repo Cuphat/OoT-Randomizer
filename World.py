@@ -68,6 +68,13 @@ class World(object):
                                              settings.warp_songs or settings.spawn_positions):
             self.settings.open_forest = 'closed_deku'
 
+        if settings.item_pool_value == 'vanilla':
+            self.settings.shuffle_mapcompass = 'vanilla'
+            self.settings.shuffle_smallkeys = self.settings.shuffle_hideoutkeys = 'vanilla'
+            self.settings.shuffle_bosskeys = self.settings.shuffle_ganon_bosskey = 'vanilla'
+            self.settings.logic_earliest_adult_trade = self.settings.logic_latest_adult_trade = 'pocket_egg'
+            self.settings.hints = 'none'
+
         self.triforce_goal = settings.triforce_goal_per_world * settings.world_count
 
         if settings.triforce_hunt:
@@ -564,6 +571,11 @@ class World(object):
         prize_locs = list(empty_boss_locations)
 
         bossCount -= self.distribution.fill_bosses(self, prize_locs, prizepool)
+
+        if self.settings.item_pool_value == 'vanilla':
+            for location in boss_locations:
+                self.push_item(location, ItemFactory(location.vanilla_item, self))
+            bossCount = 0
 
         while bossCount:
             bossCount -= 1

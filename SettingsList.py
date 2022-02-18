@@ -4028,6 +4028,7 @@ setting_infos = [
         gui_text       = 'Item Pool',
         default        = 'balanced',
         choices        = {
+            'vanilla':   'Vanilla',
             'plentiful': 'Plentiful',
             'balanced':  'Balanced',
             'scarce':    'Scarce',
@@ -4036,6 +4037,9 @@ setting_infos = [
         gui_tooltip    = '''\
             Changes the amount of major items that are 
             available in the game.
+            
+            'Vanilla': All locations have their vanilla items.
+            Settings that change item randomization are disabled.
 
             'Plentiful': One additional copy of each major 
             item is added.
@@ -4054,6 +4058,17 @@ setting_infos = [
             available.
         ''',
         shared         = True,
+        disable        = {
+            'vanilla': {
+                'sections': ['shuffle_section'],
+                'settings': ['shuffle_mapcompass', 'shuffle_smallkeys', 'shuffle_hideoutkeys', 'key_rings',
+                             'shuffle_bosskeys', 'shuffle_ganon_bosskey', 'ganon_bosskey_medallions',
+                             'ganon_bosskey_stones', 'ganon_bosskey_rewards', 'ganon_bosskey_tokens', 'junk_ice_traps',
+                             'logic_earliest_adult_trade', 'logic_latest_adult_trade', 'triforce_hunt',
+                             'triforce_goal_per_world', 'one_item_per_dungeon',
+                             'hints', 'clearer_hints', 'hint_dist', 'bingosync_url'],
+            },
+        },
     ),
     Combobox(
         name           = 'damage_multiplier',

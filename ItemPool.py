@@ -35,6 +35,7 @@ plentiful_items = ([
     ['Heart Container'] * 8)
 
 item_difficulty_max = {
+    'vanilla': {},
     'plentiful': {
         'Piece of Heart': 3,
     },
@@ -402,7 +403,7 @@ def get_pool_core(world):
         # Business Scrubs
         elif location.type in ["Scrub", "GrottoScrub"]:
             if location.vanilla_item in ['Piece of Heart', 'Deku Stick Capacity', 'Deku Nut Capacity']:
-                shuffle_item = True
+                shuffle_item = not world.settings.item_pool_value == 'vanilla'
             elif world.settings.shuffle_scrubs == 'off':
                 shuffle_item = False
             else:
@@ -413,7 +414,7 @@ def get_pool_core(world):
 
         # Kokiri Sword
         elif location.vanilla_item == 'Kokiri Sword':
-            shuffle_item = world.settings.shuffle_kokiri_sword
+            shuffle_item = world.settings.shuffle_kokiri_sword and not world.settings.item_pool_value == 'vanilla'
 
         # Weird Egg
         elif location.vanilla_item == 'Weird Egg':
@@ -435,7 +436,7 @@ def get_pool_core(world):
         elif location.vanilla_item in ['Bombchus', 'Bombchus (5)', 'Bombchus (10)', 'Bombchus (20)']:
             if world.settings.bombchus_in_logic:
                 item = 'Bombchus'
-            shuffle_item = True
+            shuffle_item = not world.settings.item_pool_value == 'vanilla'
             if location.name == 'Wasteland Bombchu Salesman':
                 shuffle_item = world.settings.shuffle_medigoron_carpet_salesman
 
@@ -454,12 +455,14 @@ def get_pool_core(world):
 
         # Bottles
         elif location.vanilla_item in ['Bottle', 'Bottle with Milk', 'Rutos Letter']:
-            if ruto_bottles:
+            if world.settings.item_pool_value == 'vanilla':
+                pass
+            elif ruto_bottles:
                 item = 'Rutos Letter'
                 ruto_bottles -= 1
             else:
                 item = random.choice(normal_bottles)
-            shuffle_item = True
+            shuffle_item = not world.settings.item_pool_value == 'vanilla'
 
         # Magic Beans
         elif location.vanilla_item == 'Magic Bean':
@@ -471,13 +474,16 @@ def get_pool_core(world):
 
         # Adult Trade Item
         elif location.vanilla_item == 'Pocket Egg':
-            earliest_trade = trade_item_options.index(world.settings.logic_earliest_adult_trade)
-            latest_trade = trade_item_options.index(world.settings.logic_latest_adult_trade)
-            if earliest_trade > latest_trade:
-                earliest_trade, latest_trade = latest_trade, earliest_trade
-            item = random.choice(trade_items[earliest_trade:latest_trade + 1])
-            world.selected_adult_trade_item = item
-            shuffle_item = True
+            if world.settings.item_pool_value != 'vanilla':
+                earliest_trade = trade_item_options.index(world.settings.logic_earliest_adult_trade)
+                latest_trade = trade_item_options.index(world.settings.logic_latest_adult_trade)
+                if earliest_trade > latest_trade:
+                    earliest_trade, latest_trade = latest_trade, earliest_trade
+                item = random.choice(trade_items[earliest_trade:latest_trade + 1])
+                world.selected_adult_trade_item = item
+                shuffle_item = True
+            else:
+                shuffle_item = False
 
         # Thieves' Hideout
         elif location.vanilla_item == 'Small Key (Thieves Hideout)':
@@ -520,7 +526,7 @@ def get_pool_core(world):
                     shuffle_item = True
             # Any other item in a dungeon.
             elif location.type in ["Chest", "NPC", "Song", "Collectable", "Cutscene", "BossHeart"]:
-                shuffle_item = True
+                shuffle_item = not world.settings.item_pool_value == 'vanilla'
 
             # Handle dungeon item.
             if shuffle_setting is not None and not shuffle_item:
@@ -534,7 +540,7 @@ def get_pool_core(world):
 
         # The rest of the overworld items.
         elif location.type in ["Chest", "NPC", "Song", "Collectable", "Cutscene", "BossHeart"]:
-            shuffle_item = True
+            shuffle_item = not world.settings.item_pool_value == 'vanilla'
 
         # Now, handle the item as necessary.
         if shuffle_item:
@@ -584,6 +590,12 @@ def get_pool_core(world):
             # Reverse Shadow is broken with vanilla keys in both vanilla/MQ
             world.state.collect(ItemFactory('Small Key (Shadow Temple)'))
             world.state.collect(ItemFactory('Small Key (Shadow Temple)'))
+
+    # Collect all small keys in vanilla item pool.
+    if world.settings.item_pool_value == 'vanilla':
+        small_keys = [item for dungeon in world.dungeons for item in dungeon.small_keys]
+        for key in small_keys:
+            world.state.collect(ItemFactory(key.name))
 
     if not world.keysanity and not world.dungeon_mq['Fire Temple']:
         world.state.collect(ItemFactory('Small Key (Fire Temple)'))
