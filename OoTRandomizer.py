@@ -6,7 +6,6 @@ import random
 import textwrap
 import sys
 
-from Gui import guiMain
 from Main import main
 from Utils import is_bundled, close_console, check_version, VersionError
 from Patches import get_tunic_color_options, get_navi_color_options
@@ -28,6 +27,7 @@ def start():
         # probably wants the gui. Users of the bundled build who want the command line
         # interface shouuld specify at least one option, possibly setting a value to a
         # default if they like all the defaults
+        from Gui import guiMain
         close_console()
         guiMain()
         sys.exit(0)
@@ -49,6 +49,7 @@ def start():
     #        logger.warning(str(e))
 
     if gui:
+        from Gui import guiMain
         guiMain(settings)
     elif settings.count is not None:
         orig_seed = settings.seed
