@@ -401,10 +401,15 @@ def guiMain(settings=None):
     else:
         # try to load saved settings
         try:
-            with open('settings.sav') as f:
-                settings = Settings( json.load(f) )
-                settings.update_seed("")
-                settings_to_guivars(settings, guivars)
+            settings_dict = {}
+            with open('settings_tournament.json') as f:
+                settings_dict.update(json.load(f))
+            if os.path.exists('settings.sav'):
+                with open('settings.sav') as f:
+                    settings_dict.update(json.load(f))
+            settings = Settings(settings_dict)
+            settings.update_seed("")
+            settings_to_guivars(settings, guivars)
         except:
             pass
 
