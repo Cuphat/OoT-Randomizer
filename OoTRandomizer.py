@@ -19,6 +19,14 @@ class ArgumentDefaultsHelpFormatter(argparse.RawTextHelpFormatter):
 def start():
     parser = argparse.ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
     parser.add_argument('--create_spoiler', help='Output a Spoiler File', action='store_true')
+    parser.add_argument('--output', default='patch', const='patch', nargs='?', choices=['none', 'patch', 'uncompressed', 'compressed'],
+                        help='''\
+                             Select the output file type. (default: %(default)s)
+                             None:          No ROM output.
+                             Patch:         ZPF Patch File, usable to generate a ROM on modern OoT Randomizer version.
+                             Uncompressed:  Outputs a 64MB uncompressed .z64 ROM.
+                             Open:          Outputs a 32MB compressed .z64 ROM.
+                             ''')
     parser.add_argument('--bridge', default='medallions', const='medallions', nargs='?', choices=['medallions', 'vanilla', 'dungeons', 'open'],
                         help='''\
                              Select requirement to spawn the Rainbow Bridge to reach Ganon's Castle. (default: %(default)s)
@@ -92,8 +100,6 @@ def start():
                              Random:       Replace the sound effect with a random sound from this list.
                              None:         Eliminate heart beeps.
                              ''')
-    parser.add_argument('--suppress_rom', help='Do not create an output rom file.', action='store_true')
-    parser.add_argument('--compress_rom', help='Create a compressed version of the output rom file.', action='store_true')
     parser.add_argument('--gui', help='Launch the GUI', action='store_true')
     args = parser.parse_args()
 

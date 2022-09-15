@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from itertools import zip_longest
+import os
 import json
 import logging
 import platform
@@ -73,22 +74,30 @@ def main(args, seed=None):
 
     outfilebase = 'OoT_%s%s%s%s%s_%s' % (world.bridge, "-openforest" if world.open_forest else "", "-opendoor" if world.open_door_of_time else "", "-fastganon" if world.fast_ganon else "", "-beatableonly" if world.check_beatable_only else "",  world.seed)
 
-    if not args.suppress_rom:
+    if args.output != 'none':
         rom = Rom(args.rom)
         patch_rom(world, rom)
-        rom.write_to_file(output_path('%s.z64' % outfilebase))
-        if args.compress_rom:
+        if args.output in ['uncompressed', 'compressed']:
+            rom.write_to_file(output_path('%s.z64' % outfilebase))
+            logger.info(f'Created uncompressed ROM at: {outfilebase}.z64')
+        if args.output == 'compressed':
             logger.info('Compressing ROM.')
+            success = True
             if platform.system() == 'Windows':
-                subprocess.call(["Compress\Compress.exe", (output_path('%s.z64' % outfilebase)), (output_path('%s-comp.z64' % outfilebase))])
+                subprocess.run(["Compress\Compress.exe", (output_path('%s.z64' % outfilebase)), (output_path('%s-comp.z64' % outfilebase))], shell=True)
             elif platform.system() == 'Linux':
-                subprocess.call(["Compress/Compress", ('%s.z64' % outfilebase)])
+                subprocess.run(["Compress/Compress", ('%s.z64' % outfilebase)], shell=True)
             elif platform.system() == 'Darwin':
-                subprocess.call(["Compress/Compress.out", ('%s.z64' % outfilebase)])
+                subprocess.run(["Compress/Compress.out", ('%s.z64' % outfilebase)], shell=True)
             else:
+                success = False
                 logger.info('OS not supported for compression')
-
-        create_patch_file(rom, output_path('%s.zpf' % outfilebase))
+            if success:
+                logger.info(f'Created compressed ROM at: {outfilebase}-comp.z64')
+                os.remove(output_path('%s.z64' % outfilebase))
+        if args.output == 'patch':
+            create_patch_file(rom, output_path('%s.zpf' % outfilebase))
+            logger.info(f'Created patch file at: {outfilebase}.zpf')
         rom.restore()
 
     if args.create_spoiler:

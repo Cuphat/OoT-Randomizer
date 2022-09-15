@@ -52,10 +52,6 @@ def guiMain(args=None):
 
     createSpoilerVar = IntVar()
     createSpoilerCheckbutton = Checkbutton(checkBoxFrame, text="Create Spoiler Log (affects item layout)", variable=createSpoilerVar)
-    suppressRomVar = IntVar()
-    suppressRomCheckbutton = Checkbutton(checkBoxFrame, text="Do not create patched Rom", variable=suppressRomVar)
-    compressRomVar = IntVar()
-    compressRomCheckbutton = Checkbutton(checkBoxFrame, text="Compress patched Rom", variable=compressRomVar)
     openForestVar = IntVar()
     openForestCheckbutton = Checkbutton(checkBoxFrame, text="Open Forest", variable=openForestVar)
     openDoorVar = IntVar()
@@ -70,8 +66,6 @@ def guiMain(args=None):
     hintsCheckbutton = Checkbutton(checkBoxFrame, text="Gossip Stone Hints with Stone of Agony", variable=hintsVar)
 
     createSpoilerCheckbutton.pack(expand=True, anchor=W)
-    suppressRomCheckbutton.pack(expand=True, anchor=W)
-    compressRomCheckbutton.pack(expand=True, anchor=W)
     openForestCheckbutton.pack(expand=True, anchor=W)
     openDoorCheckbutton.pack(expand=True, anchor=W)
     fastGanonCheckbutton.pack(expand=True, anchor=W)
@@ -102,6 +96,13 @@ def guiMain(args=None):
 
     dropDownFrame = Frame(topFrame)
 
+    outputFrame = Frame(dropDownFrame)
+    outputVar = StringVar()
+    outputVar.set('patch')
+    outputOptionMenu = OptionMenu(outputFrame, outputVar, 'none', 'patch', 'uncompressed', 'compressed')
+    outputOptionMenu.pack(side=RIGHT)
+    outputLabel = Label(outputFrame, text='Output Type')
+    outputLabel.pack(side=LEFT)
 
     bridgeFrame = Frame(dropDownFrame)
     bridgeVar = StringVar()
@@ -146,6 +147,7 @@ def guiMain(args=None):
     lowHealthSFXLabel = Label(lowHealthSFXFrame, text='Low Health SFX')
     lowHealthSFXLabel.pack(side=LEFT)
     
+    outputFrame.pack(expand=True, anchor=E)
     bridgeFrame.pack(expand=True, anchor=E)
     kokiriFrame.pack(expand=True, anchor=E)
     goronFrame.pack(expand=True, anchor=E)
@@ -166,13 +168,12 @@ def guiMain(args=None):
         guiargs.seed = int(seedVar.get()) if seedVar.get() else None
         guiargs.count = int(countVar.get()) if countVar.get() != '1' else None
         guiargs.bridge = bridgeVar.get()
+        guiargs.output = outputVar.get()
         guiargs.kokiricolor = colorVars[0].get()
         guiargs.goroncolor = colorVars[1].get()
         guiargs.zoracolor = colorVars[2].get()
         guiargs.healthSFX = lowHealthSFXVar.get()
         guiargs.create_spoiler = bool(createSpoilerVar.get())
-        guiargs.suppress_rom = bool(suppressRomVar.get())
-        guiargs.compress_rom = bool(compressRomVar.get())
         guiargs.open_forest = bool(openForestVar.get())
         guiargs.open_door_of_time = bool(openDoorVar.get())
         guiargs.fast_ganon = bool(fastGanonVar.get())
@@ -211,8 +212,6 @@ def guiMain(args=None):
     if args is not None:
         # load values from commandline args
         createSpoilerVar.set(int(args.create_spoiler))
-        suppressRomVar.set(int(args.suppress_rom))
-        compressRomVar.set(int(args.compress_rom))
         if args.nodungeonitems:
             dungeonItemsVar.set(int(not args.nodungeonitems))
         openForestVar.set(int(args.open_forest))
@@ -224,6 +223,7 @@ def guiMain(args=None):
             countVar.set(str(args.count))
         if args.seed:
             seedVar.set(str(args.seed))
+        outputVar.set(args.output)
         bridgeVar.set(args.bridge)
         colorVars[0].set(args.kokiricolor)
         colorVars[1].set(args.goroncolor)
