@@ -1,3 +1,4 @@
+import os
 import copy
 from enum import Enum, unique
 import logging
@@ -760,9 +761,10 @@ class Spoiler(object):
             else:
                 outfile.write('\n'.join(['%s: %s' % (location.name, location.item.name) for location in self.required_locations]))
 
-            f = open('hints.txt','r')
-            outfile.write('\n\n')
-            outfile.write(f.read())
-            f.close()
+            if os.path.exists('hints.txt'):
+                f = open('hints.txt','r')
+                outfile.write('\n\n')
+                outfile.write(f.read())
+                f.close()
             
             

@@ -75,30 +75,40 @@ def main(settings):
 
     output_dir = default_output_path(settings.output_dir)
 
-    if not settings.suppress_rom:
+    if settings.compress_rom != 'None':
         rom = Rom(settings.rom)
         patch_rom(worlds[settings.player_num - 1], rom)
 
         rom_path = os.path.join(output_dir, '%s.z64' % outfilebase)
 
-        rom.write_to_file(rom_path)
-        if settings.compress_rom:
+        if settings.compress_rom in ['True', 'False']:
+            rom.write_to_file(rom_path)
+            logger.info(f'Created uncompressed ROM at: {outfilebase}.z64')
+        if settings.compress_rom == 'True':
             logger.info('Compressing ROM.')
+            success = True
             if platform.system() == 'Windows':
-                subprocess.call(["Compress\\Compress.exe", rom_path, os.path.join(output_dir, '%s-comp.z64' % outfilebase)])
+                subprocess.run(["Compress\\Compress.exe", rom_path, os.path.join(output_dir, '%s-comp.z64' % outfilebase)], shell=True)
             elif platform.system() == 'Linux':
-                subprocess.call(["Compress/Compress", rom_path, os.path.join(output_dir, '%s-comp.z64' % outfilebase)])
+                subprocess.run(["Compress/Compress", rom_path, os.path.join(output_dir, '%s-comp.z64' % outfilebase)], shell=True)
             elif platform.system() == 'Darwin':
-                subprocess.call(["Compress/Compress.out", ('%s.z64' % outfilebase)])
+                subprocess.run(["Compress/Compress.out", ('%s.z64' % outfilebase)], shell=True)
             else:
                 logger.info('OS not supported for compression')
+                success = False
+            if success:
+                logger.info(f'Created compressed ROM at: {outfilebase}-comp.z64')
+                os.remove(rom_path)
+        if settings.compress_rom == 'Patch':
+            create_patch_file(rom, os.path.join(output_dir, '%s.zpf' % outfilebase))
+            logger.info(f'Created patch file at: {outfilebase}.zpf')
 
-        create_patch_file(rom, os.path.join(output_dir, '%s.zpf' % outfilebase))
         rom.restore()
 
     if settings.create_spoiler:
         worlds[settings.player_num - 1].spoiler.to_file(os.path.join(output_dir, '%s_Spoiler.txt' % outfilebase))
-    os.remove('hints.txt')
+    if os.path.exists('hints.txt'):
+        os.remove('hints.txt')
     logger.info('Done. Enjoy.')
     logger.debug('Total Time: %s', time.process_time() - start)
 

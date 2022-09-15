@@ -196,27 +196,40 @@ setting_infos = [
             'widget': 'Checkbutton',
             'default': 'checked'
         }),
-    Setting_Info('suppress_rom', bool, 0, False, 
+    Setting_Info('compress_rom', str, 2, False,
         {
-            'help': 'Do not create an output rom file.',
-            'action': 'store_true'
-        }, 
-        {
-            'text': 'Do not create Rom',
-            'group': 'rom_tab',
-            'widget': 'Checkbutton',
-            'default': 'unchecked'
-        }),
-    Setting_Info('compress_rom', bool, 0, False, 
-        {
-            'help': 'Create a compressed version of the output rom file.',
-            'action': 'store_true'
+            'default': 'True',
+            'const': 'True',
+            'nargs': '?',
+            'help': '''\
+                    Create a compressed version of the output ROM file.
+                    True: Compresses. Improves stability. Will take longer to generate
+                    False: Uncompressed. Unstable. Faster generation
+                    Patch: Patch file. No ROM, but used to send the patch data
+                    None: No ROM Output. Creates spoiler log only
+                    ''',
         },
         {
-            'text': 'Compress Rom. Improves stability but will take longer to generate',
+            'text': 'Compress ROM',
             'group': 'rom_tab',
-            'widget': 'Checkbutton',
-            'default': 'unchecked'
+            'widget': 'Radiobutton',
+            'default': 'Patch File',
+            'horizontal': True,
+            'options': {
+                'Compressed [Stable]': 'True',
+                'Uncompressed [Crashes]': 'False',
+                'Patch File': 'Patch',
+                'No ROM Output': 'None',
+            },
+            'tooltip':'''\
+                      The first time compressed generation will take a while, 
+                      but subsequent generations will be quick. It is highly 
+                      recommended to compress or the game will crash 
+                      frequently except on real N64 hardware.
+
+                      Patch files are used to send the patched data to other
+                      people without sending the ROM file.
+                      '''
         }),
     Setting_Info('open_forest', bool, 1, True, 
         {

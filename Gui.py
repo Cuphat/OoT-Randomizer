@@ -243,32 +243,6 @@ def guiMain(settings=None):
     countSpinbox.pack(side=LEFT, padx=2)
     countDialogFrame.pack(side=TOP, anchor=W, padx=5, pady=(1,1))
 
-    multiworldFrame = LabelFrame(frames['rom_tab'], text='Multi-World Generation')
-    countLabel = Label(multiworldFrame, wraplength=300, justify=LEFT, text='This is used for co-op generations. Increasing World Count will drastically increase the generation time. For more information see https://github.com/TestRunnerSRL/bizhawk-co-op')
-    countLabel.pack(side=TOP, anchor=W, padx=5, pady=(1,1))
-
-
-    worldCountFrame = Frame(multiworldFrame)
-    countLabel = Label(worldCountFrame, text='World Count')
-    guivars['world_count'] = StringVar()
-    countSpinbox = Spinbox(worldCountFrame, from_=1, to=100, textvariable=guivars['world_count'], width=3)
-
-    countLabel.pack(side=LEFT)
-    countSpinbox.pack(side=LEFT, padx=2)
-    worldCountFrame.pack(side=LEFT, anchor=N, padx=5, pady=(1,1))
-
-    playerNumFrame = Frame(multiworldFrame)
-    countLabel = Label(playerNumFrame, text='Player Number')
-    guivars['player_num'] = StringVar()
-    countSpinbox = Spinbox(playerNumFrame, from_=1, to=100, textvariable=guivars['player_num'], width=3)
-
-    countLabel.pack(side=LEFT)
-    countSpinbox.pack(side=LEFT, padx=2)
-    playerNumFrame.pack(side=LEFT, anchor=N, padx=5, pady=(1,1))
-    multiworldFrame.pack(side=TOP, anchor=W, padx=5, pady=(1,1))
-
-
-
 
     # build gui
     ############
@@ -300,6 +274,25 @@ def guiMain(settings=None):
                 if 'text' in info.gui_params:
                     label = Label(widgets[info.name], text=info.gui_params['text'])
                     label.pack(side=LEFT, anchor=W, padx=5)
+                # pack the frame
+                widgets[info.name].pack(expand=False, side=TOP, anchor=W, padx=3, pady=3)
+            elif info.gui_params['widget'] == 'Radiobutton':
+                # create the variable to store the user's decision
+                guivars[info.name] = StringVar(value=info.gui_params['default'])
+                # create the option menu
+                widgets[info.name] = LabelFrame(frames[info.gui_params['group']], text=info.gui_params['text'] if 'text' in info.gui_params else info["name"], labelanchor=NW)
+                if isinstance(info.gui_params['options'], list):
+                    info.gui_params['options'] = dict(zip(info.gui_params['options'], info.gui_params['options']))
+                # setup orientation
+                side = TOP
+                anchor = W
+                if "horizontal" in info.gui_params and info.gui_params["horizontal"]:
+                    side = LEFT
+                    anchor = N
+                # add the radio buttons
+                for option in info.gui_params["options"]:
+                    radio_button = Radiobutton(widgets[info.name], text=option, value=option, variable=guivars[info.name], justify=LEFT, wraplength=190, indicatoron=False, command=show_settings)
+                    radio_button.pack(expand=True, side=side, anchor=anchor)
                 # pack the frame
                 widgets[info.name].pack(expand=False, side=TOP, anchor=W, padx=3, pady=3)
             elif info.gui_params['widget'] == 'Scale':
@@ -358,6 +351,29 @@ def guiMain(settings=None):
     
     notebook.pack(fill=BOTH, expand=True, padx=5, pady=5)
 
+    multiworldFrame = LabelFrame(frames['rom_tab'], text='Multi-World Generation')
+    countLabel = Label(multiworldFrame, wraplength=300, justify=LEFT, text='This is used for co-op generations. Increasing World Count will drastically increase the generation time. For more information see https://github.com/TestRunnerSRL/bizhawk-co-op')
+    countLabel.pack(side=TOP, anchor=W, padx=5, pady=(1,1))
+
+
+    worldCountFrame = Frame(multiworldFrame)
+    countLabel = Label(worldCountFrame, text='World Count')
+    guivars['world_count'] = StringVar()
+    countSpinbox = Spinbox(worldCountFrame, from_=1, to=100, textvariable=guivars['world_count'], width=3)
+
+    countLabel.pack(side=LEFT)
+    countSpinbox.pack(side=LEFT, padx=2)
+    worldCountFrame.pack(side=LEFT, anchor=N, padx=5, pady=(1,1))
+
+    playerNumFrame = Frame(multiworldFrame)
+    countLabel = Label(playerNumFrame, text='Player Number')
+    guivars['player_num'] = StringVar()
+    countSpinbox = Spinbox(playerNumFrame, from_=1, to=100, textvariable=guivars['player_num'], width=3)
+
+    countLabel.pack(side=LEFT)
+    countSpinbox.pack(side=LEFT, padx=2)
+    playerNumFrame.pack(side=LEFT, anchor=N, padx=5, pady=(1,1))
+    multiworldFrame.pack(side=TOP, anchor=W, padx=5, pady=(1,1))
 
 
     # didn't refactor the rest, sorry
@@ -380,6 +396,7 @@ def guiMain(settings=None):
                 main(settings)
         except Exception as e:
             messagebox.showerror(title="Error while creating seed", message=str(e))
+            raise e
         else:
             messagebox.showinfo(title="Success", message="Rom patched successfully")
 
