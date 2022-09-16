@@ -134,7 +134,7 @@ def check_version(checked_version):
 
                 remote_base_version = base_match.group(1) if base_match else ""
                 remote_supplementary_version = int(supplementary_match.group(1)) if supplementary_match else 0
-                remote_full_version = full_match.group(1) if full_match else ""
+                remote_full_version = full_match.group(1) if full_match else remote_base_version
                 remote_full_version = remote_full_version \
                     .replace('{base_version}', remote_base_version) \
                     .replace('{supplementary_version}', str(remote_supplementary_version))
