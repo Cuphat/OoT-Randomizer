@@ -165,7 +165,8 @@ class Settings:
     def get_numeric_seed(self):
         # salt seed with the settings, and hash to get a numeric seed
         distribution = json.dumps(self.distribution.to_json(include_output=False))
-        full_string = self.settings_string + distribution + __version__ + self.seed
+        #full_string = self.settings_string + distribution + __version__ + self.seed
+        full_string = self.settings_string + distribution + '4.13.38 f.LUM' + self.seed
         return int(hashlib.sha256(full_string.encode('utf-8')).hexdigest(), 16)
 
 

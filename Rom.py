@@ -9,7 +9,7 @@ import random
 import copy
 from Utils import is_bundled, subprocess_args, local_path, data_path, default_output_path, get_version_bytes
 from ntype import BigStream
-from version import __version__
+from version import base_version, branch_identifier, supplementary_version
 
 DMADATA_START = 0x7430
 
@@ -51,6 +51,9 @@ class Rom(BigStream):
         # Add file to maximum size
         self.buffer.extend(bytearray([0x00] * (0x4000000 - len(self.buffer))))
         self.original = self.copy()
+
+        # Add version number to header.
+        self.write_version_bytes()
 
 
     def copy(self):
@@ -120,6 +123,14 @@ class Rom(BigStream):
         self.changed_dma = {}
         self.force_patch = []
         self.last_address = None
+        self.write_version_bytes()
+
+
+    def write_version_bytes(self):
+        version_bytes = get_version_bytes(base_version, branch_identifier, supplementary_version)
+        self.write_bytes(0x19, version_bytes)
+        self.write_bytes(0x35, version_bytes[:3])
+        self.force_patch.extend([0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x35, 0x36, 0x37])
 
 
     def sym(self, symbol_name):
@@ -133,13 +144,7 @@ class Rom(BigStream):
             outfile.write(self.buffer)
 
 
-    def update_rom_title(self):
-        self.write_bytes(0x35, get_version_bytes(__version__))
-
-
     def update_crc(self):
-        self.update_rom_title()
-
         t1 = t2 = t3 = t4 = t5 = t6 = 0xDF26F436
         u32 = 0xFFFFFFFF
 
