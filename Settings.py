@@ -187,7 +187,8 @@ class Settings:
 
     def get_numeric_seed(self):
         # salt seed with the settings, and hash to get a numeric seed
-        full_string = self.settings_string + __version__ + self.seed
+        #full_string = self.settings_string + __version__ + self.seed
+        full_string = self.settings_string + '4.0.0 Release' + self.seed
         return int(hashlib.sha256(full_string.encode('utf-8')).hexdigest(), 16)
 
     def sanitize_seed(self):

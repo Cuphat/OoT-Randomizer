@@ -7,9 +7,8 @@ import struct
 import subprocess
 import random
 import copy
-from Utils import is_bundled, subprocess_args
-
-from Utils import local_path, data_path, default_output_path
+from Utils import is_bundled, subprocess_args, local_path, data_path, get_version_bytes
+from version import base_version, branch_identifier, supplementary_version
 
 DMADATA_START = 0x7430
 
@@ -46,6 +45,9 @@ class LocalRom(object):
         self.changed_address = {}
         self.changed_dma = {}
         self.force_patch = []
+
+        # Add version number to header.
+        self.write_version_bytes()
 
     def decompress_rom_file(self, file, decomp_file):
         validCRC = [
@@ -100,6 +102,15 @@ class LocalRom(object):
         self.changed_dma = {}
         self.force_patch = []        
         self.__last_address = None
+        self.write_version_bytes()
+
+
+    def write_version_bytes(self):
+        version_bytes = get_version_bytes(base_version, branch_identifier, supplementary_version)
+        self.write_bytes(0x19, version_bytes)
+        self.write_bytes(0x35, version_bytes[:3])
+        self.force_patch.extend([0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x35, 0x36, 0x37])
+
 
     def sym(self, symbol_name):
         return self.symbols.get(symbol_name)
