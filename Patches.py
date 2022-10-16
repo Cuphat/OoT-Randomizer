@@ -21,7 +21,8 @@ from OcarinaSongs import replace_songs
 from MQ import patch_files, File, update_dmadata, insert_space, add_relocations
 from SaveContext import SaveContext, Scenes, FlagType
 from version import __version__
-from ItemPool import song_list
+from ItemPool import song_list, trade_items, child_trade_items
+from SettingsList import setting_infos
 
 
 def patch_rom(spoiler:Spoiler, world:World, rom:Rom):
@@ -766,13 +767,6 @@ def patch_rom(spoiler:Spoiler, world:World, rom:Rom):
     # Fix Spirit Temple to check for different rewards for scene
     rom.write_bytes(0xCA3EA2, [0x00, 0x00, 0x25, 0x4A, 0x00, 0x08])
 
-    # Fix Biggoron to check a different flag.
-    rom.write_byte(0xED329B, 0x72)
-    rom.write_byte(0xED43E7, 0x72)
-    rom.write_bytes(0xED3370, [0x3C, 0x0D, 0x80, 0x12])
-    rom.write_bytes(0xED3378, [0x91, 0xB8, 0xA6, 0x42, 0xA1, 0xA8, 0xA6, 0x42])
-    rom.write_bytes(0xED6574, [0x00, 0x00, 0x00, 0x00])
-
     # Remove the check on the number of days that passed for claim check.
     rom.write_bytes(0xED4470, [0x00, 0x00, 0x00, 0x00])
     rom.write_bytes(0xED4498, [0x00, 0x00, 0x00, 0x00])
@@ -984,6 +978,12 @@ def patch_rom(spoiler:Spoiler, world:World, rom:Rom):
         # Disable trade quest timers and prevent trade items from ever reverting
         rom.write_byte(rom.sym('DISABLE_TIMERS'), 0x01)
         rom.write_int16s(0xB6D460, [0x0030, 0x0035, 0x0036]) # Change trade items revert table to prevent all reverts
+
+    if world.settings.adult_trade_shuffle or world.settings.item_pool_value in ['plentiful', 'ludicrous']:
+        rom.write_int16(rom.sym('CFG_ADULT_TRADE_SHUFFLE'), 0x0001)
+        move_fado_in_lost_woods(rom)
+    if world.settings.shuffle_child_trade or world.settings.logic_rules == 'glitched':
+        rom.write_int16(rom.sym('CFG_CHILD_TRADE_SHUFFLE'), 0x0001)
 
     if world.settings.shuffle_overworld_entrances:
         rom.write_byte(rom.sym('OVERWORLD_SHUFFLED'), 1)
@@ -1231,10 +1231,47 @@ def patch_rom(spoiler:Spoiler, world:World, rom:Rom):
     if world.settings.open_kakariko != 'closed':
         rom.write_byte(rom.sym('OPEN_KAKARIKO'), 1)
 
+    # Mark starting trade items as owned, filtered for only shuffled items
+    # The effective starting item seen in the player inventory will be the
+    # latest shuffled item in the trade sequence, calculated in
+    # Plandomizer.WorldDistribution.configure_effective_starting_items.
+    owned_flags = 0
+    for item_name in world.distribution.starting_items.keys():
+        if item_name in world.settings.shuffle_child_trade:
+            owned_flags += 0x1 << (child_trade_items.index(item_name))
+        if item_name in world.settings.adult_trade_start:
+            owned_flags += 0x1 << (trade_items.index(item_name) + 11)
+    save_context.write_permanent_flags(Scenes.DEATH_MOUNTAIN_TRAIL, FlagType.UNK00, owned_flags)
+
+    # Mark unreachable trade-ins as traded. Only applicable with trade quest shuffle off,
+    # and only practically affects the Blue Potion purchase from Granny's Potion Shop.
+    if not world.settings.adult_trade_shuffle:
+        def calculate_traded_flags(world):
+            traded_flags = 0
+            reverting_item_map = {
+                "Cojiro": ["Odd Mushroom"],
+                "Prescription": ["Eyeball Frog", "Eyedrops"]
+            }
+            for item_name in trade_items:
+                # Break early for reverting items
+                if item_name in reverting_item_map.keys() and not world.disable_trade_revert:
+                    for revert_name in reverting_item_map[item_name]:
+                        if revert_name in world.distribution.effective_starting_items:
+                            traded_flags += 0x1 << (trade_items.index(item_name) + 11)
+                            return traded_flags
+                if item_name not in world.distribution.effective_starting_items:
+                    traded_flags += 0x1 << (trade_items.index(item_name) + 11)
+                # No need to set traded flags for items coming after the starting trade item
+                # as they will remain accessible.
+                else:
+                    return traded_flags
+            return traded_flags
+        save_context.write_permanent_flags(Scenes.DEATH_MOUNTAIN_CRATER, FlagType.UNK00, calculate_traded_flags(world))
+
     if world.settings.complete_mask_quest:
         rom.write_byte(rom.sym('COMPLETE_MASK_QUEST'), 1)
 
-    if world.settings.shuffle_child_trade == 'skip_child_zelda':
+    if world.skip_child_zelda:
         save_context.write_bits(0x0ED7, 0x04) # "Obtained Malon's Item"
         save_context.write_bits(0x0ED7, 0x08) # "Woke Talon in castle"
         save_context.write_bits(0x0ED7, 0x10) # "Talon has fled castle"
@@ -1656,6 +1693,9 @@ def patch_rom(spoiler:Spoiler, world:World, rom:Rom):
     # build misc. item hints
     buildMiscItemHints(world, messages)
 
+    if 'mask_shop' in world.settings.misc_hints:
+        rom.write_int32(rom.sym('CFG_MASK_SHOP_HINT'), 1)
+
     # Write item overrides
     override_table = get_override_table(world)
     rom.write_bytes(rom.sym('cfg_item_overrides'), get_override_table_bytes(override_table))
@@ -1777,6 +1817,12 @@ def patch_rom(spoiler:Spoiler, world:World, rom:Rom):
     update_message_by_id(messages, shop_items[0x001C].description_message, "\x08\x05\x41Bombchu  (10 pieces)  99 Rupees\x01\x05\x40This looks like a toy mouse, but\x01it's actually a self-propelled time\x01bomb!\x09\x0A")
     update_message_by_id(messages, shop_items[0x001C].purchase_message, "\x08Bombchu  10 pieces   99 Rupees\x09\x01\x01\x1B\x05\x42Buy\x01Don't buy\x05\x40")
 
+    # Fix blue potion shop text
+    update_message_by_id(messages, 0x80B5, "\x08\x05\x43Blue Potion 100 Rupees\x01\x05\x40If you drink this, you will\x01recover your life energy and magic.\x09\x0A", 0x03)
+    update_message_by_id(messages, 0x80BE, "\x08Blue Potion 100 Rupees\x01\x01\x1B\x05\x42Buy\x01Don't buy\x05\x40", 0x03)
+    shop_items[0x000A].description_message = 0x80B5
+    shop_items[0x000A].purchase_message = 0x80BE
+
     shuffle_messages.shop_item_messages = []
 
     # kokiri shop
@@ -1842,6 +1888,14 @@ def patch_rom(spoiler:Spoiler, world:World, rom:Rom):
     rom.write_byte(0x2DD8029, len(shop_objs))
     rom.write_int32(0x2DD802C, 0x03006A40)
     rom.write_int16s(0x2DDEA40, list(shop_objs))
+
+    # mask shop
+    shop_objs = place_shop_items(rom, world, shop_items, messages,
+        list(filter(lambda loc: loc.type == 'MaskShop', world.get_region('Market Mask Shop').locations)))
+    shop_objs |= {0x013E, 0x00B2, 0x0111, 0x00C5, 0x0165} # Shop objects
+    rom.write_byte(0x340A029, len(shop_objs))
+    rom.write_int32(0x340A02C, 0x0300D400)
+    rom.write_int16s(0x3417400, list(shop_objs))
 
     # Scrub text stuff.
     def update_scrub_text(message, text_replacement, default_price, price, item_name=None):
@@ -2286,6 +2340,8 @@ def get_override_entry(location):
         type = 3
     elif location.type == 'Shop' and location.item.type != 'Shop':
         type = 0
+    elif location.type == 'MaskShop' and location.vanilla_item in location.world.settings.shuffle_child_trade:
+        type = 0
     elif location.type == 'GrottoScrub' and location.item.type != 'Shop':
         type = 4
     elif location.type in ['Song', 'Cutscene']:
@@ -2483,6 +2539,18 @@ def set_spirit_shortcut_actors(rom):
     get_actor_list(rom, set_spirit_shortcut)
 
 
+def move_fado_in_lost_woods(rom):
+    def move_fado(rom, actor_id, actor, scene):
+        if actor_id == 0x163 and scene == 0x5B: # move Fado to short stump
+            rom.write_int16(actor + 2, 0xFBA6)
+            rom.write_int16(actor + 4, 0x0000)
+            rom.write_int16(actor + 6, 0xFFA1)
+            rom.write_int16(actor + 8, 0x0000)
+            rom.write_int16(actor + 10, 0x25A4)
+            rom.write_int16(actor + 12, 0x0000)
+
+    get_actor_list(rom, move_fado)
+
 
 def get_locked_doors(rom, world):
     def locked_door(rom, actor_id, actor, scene):
@@ -2533,9 +2601,13 @@ def place_shop_items(rom, world, shop_items, messages, locations, init_shop_id=F
 
     shop_objs = { 0x0148 } # "Sold Out" object
     for location in locations:
-        if location.item.type == 'Shop':
+        if (location.item.type == 'Shop' or
+           (location.type == 'MaskShop' and
+           ((location.vanilla_item not in world.settings.shuffle_child_trade)
+             or not world.settings.shuffle_child_trade and location.vanilla_item == location.item))):
             shop_objs.add(location.item.special['object'])
-            rom.write_int16(location.address, location.item.index)
+            if location.item.type == 'Shop': # only necessary for shuffling shop items, masks are treated like regular items when shuffled
+                rom.write_int16(location.address, location.item.index)
         else:
             if location.item.looks_like_item is not None:
                 item_display = location.item.looks_like_item
@@ -2556,13 +2628,27 @@ def place_shop_items(rom, world, shop_items, messages, locations, init_shop_id=F
 
             shop_item.object = rom_item['object_id']
             shop_item.model = rom_item['graphic_id'] - 1
-            shop_item.price = location.price
+            if location.type == 'MaskShop':
+                shop_item.price = 0
+            else:
+                shop_item.price = location.price
             shop_item.pieces = 1
             shop_item.get_item_id = location.default
             shop_item.func1 = 0x808648CC
-            shop_item.func2 = 0x808636B8
+            shop_item.func2 = 0x808636B8  # default EnGirlA_CanBuy_WeirdEgg
             shop_item.func3 = 0x00000000
             shop_item.func4 = 0x80863FB4
+
+            # Mask shop lets you see the Mask of Truth before you can get it.
+            # Without complete mask quest, trading all masks will automatically
+            # give it and set this as sold out.
+            # With complete mask quest, it's free to take normally
+            if not world.settings.complete_mask_quest and \
+               (location.vanilla_item == 'Mask of Truth' and 'Mask of Truth' in world.settings.shuffle_child_trade) or \
+               ('mask_shop' in world.settings.misc_hints and location.vanilla_item == 'Goron Mask' and 'Goron Mask' in world.settings.shuffle_child_trade) or \
+               ('mask_shop' in world.settings.misc_hints and location.vanilla_item == 'Zora Mask' and 'Zora Mask' in world.settings.shuffle_child_trade) or \
+               ('mask_shop' in world.settings.misc_hints and location.vanilla_item == 'Gerudo Mask' and 'Gerudo Mask' in world.settings.shuffle_child_trade):
+                shop_item.func2 = 0x80863870  # override to EnGirlA_CanBuy_SoldOut to prevent purchase
 
             message_id = (shop_id - 0x32) * 2
             shop_item.description_message = 0x8100 + message_id
@@ -2579,20 +2665,20 @@ def place_shop_items(rom, world, shop_items, messages, locations, init_shop_id=F
                     split_item_name[0] = create_fake_name(split_item_name[0])
 
                 if world.settings.world_count > 1:
-                    description_text = '\x08\x05\x41%s  %d Rupees\x01%s\x01\x05\x42Player %d\x05\x40\x01Special deal! ONE LEFT!\x09\x0A\x02' % (split_item_name[0], location.price, split_item_name[1], location.item.world.id + 1)
+                    description_text = '\x08\x05\x41%s  %d Rupees\x01%s\x01\x05\x42Player %d\x05\x40\x01Special deal! ONE LEFT!\x09\x0A\x02' % (split_item_name[0], shop_item.price, split_item_name[1], location.item.world.id + 1)
                 else:
-                    description_text = '\x08\x05\x41%s  %d Rupees\x01%s\x01\x05\x40Special deal! ONE LEFT!\x01Get it while it lasts!\x09\x0A\x02' % (split_item_name[0], location.price, split_item_name[1])
-                purchase_text = '\x08%s  %d Rupees\x09\x01%s\x01\x1B\x05\x42Buy\x01Don\'t buy\x05\x40\x02' % (split_item_name[0], location.price, split_item_name[1])
+                    description_text = '\x08\x05\x41%s  %d Rupees\x01%s\x01\x05\x40Special deal! ONE LEFT!\x01Get it while it lasts!\x09\x0A\x02' % (split_item_name[0], shop_item.price, split_item_name[1])
+                purchase_text = '\x08%s  %d Rupees\x09\x01%s\x01\x1B\x05\x42Buy\x01Don\'t buy\x05\x40\x02' % (split_item_name[0], shop_item.price, split_item_name[1])
             else:
                 shop_item_name = getSimpleHintNoPrefix(item_display)
                 if location.item.name == 'Ice Trap':
                     shop_item_name = create_fake_name(shop_item_name)
 
                 if world.settings.world_count > 1:
-                    description_text = '\x08\x05\x41%s  %d Rupees\x01\x05\x42Player %d\x05\x40\x01Special deal! ONE LEFT!\x09\x0A\x02' % (shop_item_name, location.price, location.item.world.id + 1)
+                    description_text = '\x08\x05\x41%s  %d Rupees\x01\x05\x42Player %d\x05\x40\x01Special deal! ONE LEFT!\x09\x0A\x02' % (shop_item_name, shop_item.price, location.item.world.id + 1)
                 else:
-                    description_text = '\x08\x05\x41%s  %d Rupees\x01\x05\x40Special deal! ONE LEFT!\x01Get it while it lasts!\x09\x0A\x02' % (shop_item_name, location.price)
-                purchase_text = '\x08%s  %d Rupees\x09\x01\x01\x1B\x05\x42Buy\x01Don\'t buy\x05\x40\x02' % (shop_item_name, location.price)
+                    description_text = '\x08\x05\x41%s  %d Rupees\x01\x05\x40Special deal! ONE LEFT!\x01Get it while it lasts!\x09\x0A\x02' % (shop_item_name, shop_item.price)
+                purchase_text = '\x08%s  %d Rupees\x09\x01\x01\x1B\x05\x42Buy\x01Don\'t buy\x05\x40\x02' % (shop_item_name, shop_item.price)
 
             update_message_by_id(messages, shop_item.description_message, description_text, 0x03)
             update_message_by_id(messages, shop_item.purchase_message, purchase_text, 0x03)

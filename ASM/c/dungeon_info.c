@@ -3,6 +3,8 @@
 #include "gfx.h"
 #include "text.h"
 #include "z64.h"
+#include "trade_quests.h"
+#include "dpad.h"
 
 typedef struct {
     uint8_t index;
@@ -80,7 +82,7 @@ void draw_background(z64_disp_buf_t *db, int bg_left, int bg_top, int bg_width, 
 
 void draw_dungeon_info(z64_disp_buf_t *db) {
     pad_t pad_held = z64_ctxt.input[0].raw.pad;
-    int draw = CAN_DRAW_DUNGEON_INFO && (pad_held.dl || pad_held.dr || pad_held.dd || pad_held.a);
+    int draw = CAN_DRAW_DUNGEON_INFO && !CAN_DRAW_TRADE_DPAD && (pad_held.dl || pad_held.dr || pad_held.dd || pad_held.a);
     if (!draw) {
         return;
     }

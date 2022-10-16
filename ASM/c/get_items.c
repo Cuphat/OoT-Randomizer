@@ -1,5 +1,6 @@
 #include "get_items.h"
 
+#include "trade_quests.h"
 #include "icetrap.h"
 #include "item_table.h"
 #include "util.h"
@@ -315,6 +316,19 @@ void get_item(z64_actor_t *from_actor, z64_link_t *link, int8_t incoming_item_id
 
     if (from_actor && incoming_item_id != 0) {
         int8_t item_id = incoming_negative ? -incoming_item_id : incoming_item_id;
+        // Remove turned in trade items from player inventory. The incoming item
+        // ID will be the next sequential trade item, so use that as a reference.
+        item_row_t *row = get_item_row(item_id);
+        if (row) {
+            int16_t action_id = row->action_id;
+            if (CFG_ADULT_TRADE_SHUFFLE && action_id > 0 && from_actor->actor_id != 0x0A && IsAdultTradeItem(action_id)) {
+                if (action_id == Z64_ITEM_BIGGORON_SWORD) {
+                    TurnInTradeItem(Z64_ITEM_CLAIM_CHECK);
+                } else {
+                    TurnInTradeItem(action_id - 1);
+                }
+            }
+        }
         override = lookup_override(from_actor, z64_game.scene_index, item_id);
     }
 

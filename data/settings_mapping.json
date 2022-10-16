@@ -190,6 +190,8 @@
             "tokensanity",
             "shuffle_scrubs",
             "shuffle_child_trade",
+            "adult_trade_shuffle",
+            "adult_trade_start",
             "shuffle_cows",
             "shuffle_kokiri_sword",
             "shuffle_ocarinas",
@@ -358,8 +360,7 @@
           "settings": [
             "item_pool_value",
             "junk_ice_traps",
-            "ice_trap_appearance",
-            "adult_trade_start"
+            "ice_trap_appearance"
           ]
         }
       ]

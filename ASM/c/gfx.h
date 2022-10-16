@@ -36,4 +36,16 @@ void sprite_load(z64_disp_buf_t *db, sprite_t *sprite,
 void sprite_draw(z64_disp_buf_t *db, sprite_t *sprite, int tile_index,
         int left, int top, int width, int height);
 
+#define OPEN_DISPS(gfx)             \
+    {                               \
+        GfxContext* __gfx = (gfx);  \
+        u32*        __dlist;        \
+        (void)__gfx;                \
+        (void)__dlist;
+
+#define CLOSE_DISPS()               \
+    }
+
+#define POLY_OPA_DISP   (__gfx->poly_opa.p)
+
 #endif

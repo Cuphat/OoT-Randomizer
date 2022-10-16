@@ -842,7 +842,7 @@ nop
 .orga 0xC6C7A8
     jal      Shop_Keeper_Init_ID
 .orga 0xC6C920
-    jal      Shop_Keeper_Init_ID
+    jal      Shop_Keeper_Update_ID
 
 ; Override Deku Salescrub sold out check
 ; addiu at, zero, 2
@@ -865,6 +865,44 @@ nop
 ; sh t7, 0xef0(v0)
 .orga 0xDF7CB0
     jal     Deku_Set_Sold_Out
+
+;==================================================================================================
+; Mask Shop Changes for Trade Shuffle
+;==================================================================================================
+.orga 0xC01CD8
+    jal     set_mask_text_hook
+
+; The mask text hook replaces this instruction,
+; which happens to be duplicated for EnGirlA_SetItemDescription
+; but the other argument is set after the jal to EnGirlA_SetItemOutOfStock.
+; Making them the same lets us avoid running the displaced code in the hook.
+.orga 0xC01CEC
+    or      a1, a2, $zero
+
+; Set mask shop sold out flags after purchase if
+; the slot is shuffled
+.orga 0xC6F5DC
+    jal     set_mask_sold_out
+    nop
+
+; Change mask shop bunny hood turn in to check the given
+; shelf slot instead of the shop item ID to be compatible
+; with Mask of Truth shuffled. A custom buy item function
+; is used for shuffled Mask of Truth slot to prevent purchase
+; without trading all masks.
+.orga 0xC6F5F8
+    addiu   at, $zero, 0x0002   ; Mask of Truth slot
+    lui     v1, 0x8012
+    lbu     t5, 0x0242(s0)      ; cursor index
+
+; Use trade shuffle flags for mask salesman greeting
+.orga 0xC70704
+    j       SetupMaskShopHelloDialogOverride
+
+; Use trade shuffle flags to loop through mask payments
+.orga 0xC6D7EC
+    j       TryPaybackMaskOverride
+    addiu   sp, sp, 0x18             ; reset stack pointer from overrided function
 
 ;==================================================================================================
 ; Dungeon info display
@@ -1621,6 +1659,202 @@ skip_GS_BGS_text:
     lui at, 0x800F
 
 ;==================================================================================================
+; Trade Quest Shuffle Flag Hooks
+;==================================================================================================
+; Control if Fado (blonde Kokiri girl) can spawn in Lost Woods
+.orga 0xE538C4
+    or      t3, $zero, $ra
+    jal     check_fado_spawn_flags
+.orga 0xE538D4
+    or      $ra, $zero, t3
+; Fix Fado's text id when trading in the odd potion out of order
+.orga 0xE535E4
+    sh      t2, 0x010E(s0)
+
+; Control if Grog can spawn in Lost Woods
+.orga 0xE20BC8
+    jal     check_grog_spawn_flags
+
+; Control if the skull kid near Grog/Fado can spawn in Lost Woods
+; Replaces
+;   addu    t9, t9, t8
+;   lbu     t9, -0x59BC(t9)
+.orga 0xDEF73C
+    jal     check_skull_kid_spawn_flags
+    nop
+
+; Set traded flag after giving skull mask to the skull kid (en_skj).
+; Commands reorganized to fit and prevent displaced code.
+.orga 0xDF141C
+    jal     set_skull_mask_traded_flag
+    lw      s0, 0x0018($sp)
+    lw      $ra, 0x001C($sp)
+    jr      $ra
+    addiu   $sp, $sp, 0x0020
+
+; Set traded flag after giving keaton mask to the guard (en_heishi2).
+.orga 0xD1B894
+    jal     set_keaton_mask_traded_flag
+
+; Set traded flag after giving spooky mask to the graveyard kid (en_cs).
+.orga 0xE60D00
+    jal     set_spooky_mask_traded_flag
+
+; Set traded flag after giving bunny hood to the running man (en_mm).
+.orga 0xE50888
+    jal     set_bunny_hood_traded_flag
+
+; Skip BGS flag checks for Biggoron trade dialog
+
+; EnGo2_GetTextIdGoronDmtBiggoron
+; BGS flag text ID is the same as the claim check branch. Skip it.
+; This has the side effect that if claim check is traded in and
+; the adult trade item is changed to an item earlier than prescription,
+; Biggoron will use his early-game text throwing shade at Medigoron.
+; Replaces
+;   lbu     t6, 0x003E(a1)
+.orga 0xED3298
+    or      t6, $zero, $zero
+
+; EnGo2_GetStateGoronDmtBiggoron
+; Prevents duping the BGS get item cutscene if claim check is
+; presented again. Update to use the trade quest "traded"
+; flags in DMC unk_00_ scene flags.
+; Replaces
+;   lbu     t8, -0x59F2(t8)
+.orga 0xED337C
+    jal     check_claim_check_traded
+
+; EnGo2_BiggoronSetTextId
+; First instance controls Biggoron's response after the
+; claim check has been turned in, including if claim check
+; is presented to him again. Modify to use the trade quest
+; "traded" flags and also if the adult trade item is the claim
+; check. The second part is important to allow turning in
+; the broken sword and eyedrops after claim check has been
+; turned in. Since v0 (bgs flag state) is immediately checked
+; in the next branch, change this branch check to use t8
+; Replaces
+;   lbu     v0, 0x003E(v1)
+;   or      a0, a1, $zero
+;   beq     v0, $zero, lbl_80B58CFC
+.orga 0xED43E4
+    jal     check_claim_check_traded
+    or      a0, a1, $zero
+    beq     t8, $zero, claim_check_not_traded
+.orga 0xED442C
+claim_check_not_traded:
+
+; Skip setting the BGS flag after turning in the claim check
+; Replaces
+;   sb      t8, 0x003E(v0)
+.orga 0xED6574
+    nop
+
+; Change Biggoron animation if adult trade quest shuffle is on
+; to always in pain until the eye drops are turned in.
+; Replaces
+;   lbu     v0, 0x0074(t4)
+.orga 0xED5C04
+    jal     check_if_biggoron_should_cry_eye_hook
+.orga 0xED4860
+    jal     check_if_biggoron_should_cry_anim_hook
+    nop
+.orga 0xED5784
+    jal     check_if_biggoron_should_cry_sfx_hook
+    nop
+
+; Disable Cucco lady overriding her get item ID
+; as adult if Pocket Egg not obtained. The correct
+; ID is already set by this point.
+.orga 0xE1E9A0
+    jal     check_cucco_lady_talk_exch_hook
+.orga 0xE1E9DC
+    jal     check_cucco_lady_talk_none_hook
+.orga 0xE1ECD4
+    jal     check_cucco_lady_exchange_id_hook
+.orga 0xE1ECDC
+    nop
+.orga 0xE1ED64
+    jal     check_cucco_lady_flag_hook
+    nop
+
+; Prevent turning in trade items more than once.
+; Nullfies target actor if custom trade quest flag for the
+; presented item is set. Without a target actor, falls through
+; to default cutscene item text.
+; EXCEPTION: Claim check can be presented multiple times to
+; match vanilla behavior. "Traded" flags are checked in the
+; Biggoron actor to prevent duping.
+.orga 0xBD6CD0 ; player actor vram 0x80839320
+    jal     check_trade_item_traded
+
+; Update owned trade items after eggs hatch
+; Replaces
+;   lui     a0, 0x8012
+;   addiu   a0, a0, 0xA5D0
+;   or      v0, $zero, $zero
+.orga 0xAE795C
+    jal     update_shiftable_trade_item_egg_hook
+    nop
+    lw      ra, 0x14($sp)
+    addiu   sp, sp, 0x18
+    jr      ra
+    nop
+
+; Prevent losing masks to SOLD OUT if child trade shuffle
+; or single child mask shuffle is on
+.orga 0xAE72D0
+    jal     check_if_mask_sells_out
+    nop
+    bnez    v1, return_null_item_id
+    nop
+    nop
+
+.orga 0xAE734C
+return_null_item_id:
+
+; Prevent reverting Zelda's Letter to Chicken when
+; save warping from Zelda's courtyard before talking
+; to Impa. Only applied if trade shuffle is on.
+.orga 0xB06424
+    jal     handle_child_zelda_savewarp
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+    nop
+
+; Prevent obtaining the item on Zelda's Letter more
+; than once.
+.orga 0xEFE9B4
+;.orga 0xEFE958
+    jal     check_zelda_cutscene_watched
+    nop
+    bnez    v0, end_child_zelda_cutscene
+    lbu     v1, 0x01F8(s0)
+.orga 0xEFEA68
+end_child_zelda_cutscene:
+.orga 0xEFEA00
+    nop
+
+; Courtyard guards never block the way after talking to Zelda.
+; En_Heishi1 init function branch logic nulled for EVENTCHKINF_80.
+.orga 0xCD5E30
+    nop
+.orga 0xCD5E7C
+    b       courtyard_guards_kill
+.orga 0xCD5E8C
+courtyard_guards_kill:
+
+;==================================================================================================
 ; Remove Shooting gallery actor when entering the room with the wrong age
 ;==================================================================================================
 .orga 0x00D357D4
@@ -1825,12 +2059,6 @@ skip_GS_BGS_text:
     lui     a1, 0x808D
     bnez_a  t7, 0xC72C8C
     nop
-
-;==================================================================================================
-; Running Man should fill wallet when trading Bunny Hood.
-;==================================================================================================
-.orga 0xE50888
-    li      a0, 999
 
 ;==================================================================================================
 ; Change relevant checks to Bomb Bag

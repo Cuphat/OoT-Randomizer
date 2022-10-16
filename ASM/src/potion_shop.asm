@@ -1,20 +1,21 @@
 potion_shop_fix:
-    lbu		t9, 0x008A(v0) ; Load adult trade item slot
-	li      t1, 0xFF
-	beq     t1, t9, @@no_potion
-	nop
+    addiu   sp, sp, -0x20
+    sw      v0, 0x08(sp)
+    sw      s0, 0x0C(sp)
+    sw      v1, 0x10(sp)
+    sw      a0, 0x14(sp)
+    sw      a1, 0x18(sp)
+    sw      ra, 0x1C(sp)
 
-	slti    t1, t9, 0x31
-	bnez    t1, @@return
-	li      t9, 0x00
+    jal     SaveFile_TradeItemIsTraded
+    ori     a0, $zero, 0x30
+    or      t9, v0, $zero
 
-	li      t9, 0x01
-	b       @@return
-	nop
-
-@@no_potion:
-	li      t9, 0x00
-
-@@return:
+    lw      v0, 0x08(sp)
+    lw      s0, 0x0C(sp)
+    lw      v1, 0x10(sp)
+    lw      a0, 0x14(sp)
+    lw      a1, 0x18(sp)
+    lw      ra, 0x1C(sp)
     jr      ra
-	nop
+    addiu   sp, sp, 0x20

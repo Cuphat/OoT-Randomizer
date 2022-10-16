@@ -9,7 +9,7 @@
         "bombchus_in_logic":                       false,
         "trials_random":                           false,
         "trials":                                  0,
-        "shuffle_child_trade":                     "vanilla",
+        "shuffle_child_trade":                     [],
         "dungeon_shortcuts_choice":                "off",
         "open_forest":                             "closed_deku",
         "shuffle_kokiri_sword":                    true,

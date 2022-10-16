@@ -1,5 +1,6 @@
 #include "item_effects.h"
 #include "dungeon_info.h"
+#include "trade_quests.h"
 
 #define rupee_cap ((uint16_t*)0x800F8CEC)
 volatile uint8_t MAX_RUPEES = 0;
@@ -158,4 +159,10 @@ void open_mask_shop(z64_file_t *save, int16_t arg1, int16_t arg2) {
         save->item_get_inf[3] = save->item_get_inf[3] | 0x8F00; // "Sold Masks & Unlocked Masks" / "Obtained Mask of Truth"
         save->event_chk_inf[8] = save->event_chk_inf[8] | 0xF000; // "Paid Back Mask Fees"
     }
+    // Set Zelda's Letter as collected in trade quest flags
+    trade_quest_upgrade(save, arg1, arg2);
+}
+
+void trade_quest_upgrade(z64_file_t *save, int16_t item_id, int16_t arg2) {
+    SaveFile_SetTradeItemAsOwned((uint8_t)item_id);
 }
