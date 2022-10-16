@@ -7,7 +7,7 @@ import { ErrorDetailsWindow } from '../errorDetailsWindow/errorDetailsWindow.com
     <nb-card class="progress-window">
       <nb-card-header>
       Generating Seed
-      <button nbButton class="headerButton" size="xsmall" status="danger" [disabled]="cancellationInProgress" (click)="cancelGeneration()">X</button>
+      <button nbButton class="headerButton" size="xsmall" [disabled]="cancellationInProgress" (click)="cancelGeneration()">X</button>
       </nb-card-header>
       <nb-card-body>
         {{ progressMessage }}
@@ -18,8 +18,8 @@ import { ErrorDetailsWindow } from '../errorDetailsWindow/errorDetailsWindow.com
         Total:
         <nb-progress-bar [value]="progressPercentageTotal" [status]="progressStatus == 0 ? 'info': progressStatus == 1 ? 'success' : 'danger'" [displayValue]="true"></nb-progress-bar>
         <div *ngIf="progressPercentageTotal == 100" class="footerButtonWrapper">
-          <button nbButton [disabled]="cancellationInProgress" size="small" status="primary" (click)="cancelGeneration()">OK</button>
-          <button *ngIf="progressErrorDetails.length > 0" nbButton [disabled]="cancellationInProgress" size="small" status="danger" (click)="showErrorDetails()">Details</button>
+          <button nbButton [disabled]="cancellationInProgress" size="small" status="info" (click)="cancelGeneration()">OK</button>
+          <button *ngIf="progressErrorDetails.length > 0" nbButton [disabled]="cancellationInProgress" status="info" size="small" (click)="showErrorDetails()">Details</button>
         </div>
       </nb-card-body>
     </nb-card>

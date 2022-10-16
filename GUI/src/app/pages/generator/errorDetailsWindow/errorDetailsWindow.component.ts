@@ -7,15 +7,15 @@ import { GUIGlobal } from '../../../providers/GUIGlobal';
     <nb-card class="error-window">
       <nb-card-header class="errorHeader">
         You encountered an error.<br>Please copy and post the following details in the OoTR Discord:
-        <button nbButton class="headerButton" size="xsmall" status="danger" (click)="closeDialog()">X</button>
+        <button nbButton class="headerButton" size="xsmall" (click)="closeDialog()">X</button>
       </nb-card-header>
       <nb-card-body class="errorBody">
-        <textarea class="textAreaError" nbInput fullWidth readonly>{{ errorMessage }}</textarea>   
+        <textarea class="textAreaError" nbInput fullWidth readonly>{{ errorMessage }}</textarea>
       </nb-card-body>
       <nb-card-footer>
         <div class="footerButtonWrapper">
-          <button nbButton hero size="small" status="primary" (click)="closeDialog()">OK</button>
-          <button nbButton hero size="small" status="info" (click)="copyErrorMessage()">Copy</button>
+          <button nbButton size="small" status="info" (click)="closeDialog()">OK</button>
+          <button nbButton size="small" status="info" (click)="copyErrorMessage()">Copy</button>
         </div>
       </nb-card-footer>
     </nb-card>

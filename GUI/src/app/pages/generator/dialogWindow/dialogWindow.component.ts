@@ -6,14 +6,14 @@ import { NbDialogRef } from '@nebular/theme';
     <nb-card class="dialog-window">
       <nb-card-header>
       {{ dialogHeader }}
-      <button nbButton class="headerButton" size="xsmall" status="danger" (click)="closeDialog()">X</button>
+      <button nbButton class="headerButton" size="xsmall" (click)="closeDialog()">X</button>
       </nb-card-header>
       <nb-card-body>
-        {{ dialogMessage }}   
+        {{ dialogMessage }}
       </nb-card-body>
       <nb-card-footer>
         <div class="footerButtonWrapper">
-          <button nbButton hero size="small" status="primary" (click)="closeDialog()">OK</button>
+          <button nbButton size="small" status="info" (click)="closeDialog()">OK</button>
         </div>
       </nb-card-footer>
     </nb-card>
@@ -28,7 +28,7 @@ export class DialogWindow {
   constructor(protected ref: NbDialogRef<DialogWindow>) {
   }
 
-  closeDialog() { 
+  closeDialog() {
     this.ref.close();
   }
 }

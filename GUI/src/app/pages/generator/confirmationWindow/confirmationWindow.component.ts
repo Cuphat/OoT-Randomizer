@@ -6,15 +6,15 @@ import { NbDialogRef } from '@nebular/theme';
     <nb-card class="confirmation-window">
       <nb-card-header>
       {{ dialogHeader }}
-      <button nbButton class="headerButton" size="xsmall" status="danger" (click)="closeDialogNo()">X</button>
+      <button nbButton class="headerButton" size="xsmall" (click)="closeDialogNo()">X</button>
       </nb-card-header>
       <nb-card-body>
-        {{ dialogMessage }} 
+        {{ dialogMessage }}
       </nb-card-body>
       <nb-card-footer>
         <div class="footerButtonWrapper">
-          <button nbButton size="small" status="success" (click)="closeDialogYes()">Yes</button>
-          <button nbButton size="small" status="danger" (click)="closeDialogNo()">No</button>
+          <button nbButton size="small" status="info" (click)="closeDialogYes()">Yes</button>
+          <button nbButton size="small" status="info" (click)="closeDialogNo()">No</button>
         </div>
       </nb-card-footer>
     </nb-card>
@@ -33,7 +33,7 @@ export class ConfirmationWindow {
     this.ref.close(true);
   }
 
-  closeDialogNo() { 
+  closeDialogNo() {
     this.ref.close(false);
   }
 }

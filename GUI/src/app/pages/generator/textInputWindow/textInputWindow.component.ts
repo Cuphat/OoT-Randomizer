@@ -6,7 +6,7 @@ import { NbDialogRef } from '@nebular/theme';
     <nb-card class="textInput-window">
       <nb-card-header>
       {{ dialogHeader }}
-      <button nbButton class="headerButton" size="xsmall" status="danger" (click)="cancelDialog()">X</button>
+      <button nbButton class="headerButton" size="xsmall" (click)="cancelDialog()">X</button>
       </nb-card-header>
       <nb-card-body>
         {{ dialogMessage }}
@@ -15,7 +15,7 @@ import { NbDialogRef } from '@nebular/theme';
       </nb-card-body>
       <nb-card-footer>
         <div class="footerButtonWrapper">
-          <button nbButton hero size="small" status="primary" (click)="confirmDialog()">OK</button>
+          <button nbButton size="small" status="info" (click)="confirmDialog()">OK</button>
         </div>
       </nb-card-footer>
     </nb-card>
@@ -29,7 +29,7 @@ export class TextInputWindow {
 
   inputText: string = "";
 
-  @ViewChild("inputBar") inputBarRef: ElementRef;
+  @ViewChild("inputBar", { static: true }) inputBarRef: ElementRef;
 
   constructor(protected ref: NbDialogRef<TextInputWindow>) {
   }
@@ -38,7 +38,7 @@ export class TextInputWindow {
     this.inputBarRef.nativeElement.focus();
   }
 
-  cancelDialog() { 
+  cancelDialog() {
     this.ref.close();
   }
 
