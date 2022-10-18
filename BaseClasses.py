@@ -3,6 +3,9 @@ from enum import Enum, unique
 import logging
 from collections import OrderedDict
 
+from JSONDump import dump_obj, CollapseList, CollapseDict, AlignedDict, SortedDict
+from version import __version__
+
 
 class World(object):
 
@@ -582,8 +585,7 @@ class Spoiler(object):
         sort_order = {"Song": 0, "Boss": -1}
         spoiler_locations.sort(key=lambda item: sort_order.get(item.type, 1))
         self.locations = {'other locations': OrderedDict([(str(location), str(location.item) if location.item is not None else 'Nothing') for location in spoiler_locations])}
-        from Main import __version__ as OoTRVersion
-        self.metadata = {'version': OoTRVersion,
+        self.metadata = {'version': __version__,
                          'seed': self.world.seed,
                          'bridge': self.world.bridge,
                          'forest': self.world.open_forest,
@@ -592,6 +594,11 @@ class Spoiler(object):
                          'dungeonitems': self.world.place_dungeon_items}
 
     def to_file(self, filename):
+        if filename.endswith('.txt'):
+            filename = f"{filename[:-4]}.json"
+        self.to_json_file(filename)
+
+    def to_txt_file(self, filename):
         self.parse_data()
         with open(filename, 'w') as outfile:
             outfile.write('OoT Randomizer Version %s  -  Seed: %s\n\n' % (self.metadata['version'], self.metadata['seed']))
@@ -619,3 +626,40 @@ class Spoiler(object):
                 path_listings.append("{}\n        {}".format(location, "\n   =>   ".join(path_lines)))
 
             outfile.write('\n'.join(path_listings))
+
+    def to_json(self):
+        self.parse_data()
+        self_dict = {
+            ":version": __version__,
+            ":seed": self.world.seed,
+            "settings": {
+                "create_spoiler": True,
+                "bridge": self.world.bridge,
+                "open_forest": self.world.open_forest,
+                "open_door_of_time": self.world.open_door_of_time,
+                "nodungeonitems": not self.world.place_dungeon_items,
+                "beatableonly": self.world.check_beatable_only,
+                "hints": self.world.hints,
+            },
+            "entrances": {entry['entrance']: entry['exit'] for entry in self.entrances},
+            "locations": {location: item for (location, item) in self.locations['other locations'].items()},
+            ":playthrough": AlignedDict({
+                    sphere_nr: SortedDict({
+                        location: item for location, item in sphere.items()
+                    })
+                    for (sphere_nr, sphere) in self.playthrough.items()
+                }, depth=2),
+            ":paths": AlignedDict({
+                    location: {
+                        region: exit for region, exit in path
+                    }
+                    for location, path in sorted(self.paths.items())
+                }, depth=2),
+        }
+
+        del self_dict[":paths"]
+        return self_dict
+
+    def to_json_file(self, filename):
+        with open(filename, 'w', encoding='utf-8') as outfile:
+            outfile.write(dump_obj(self.to_json()))
