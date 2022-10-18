@@ -25,7 +25,7 @@ def start():
                              None:          No ROM output.
                              Patch:         ZPF Patch File, usable to generate a ROM on modern OoT Randomizer version.
                              Uncompressed:  Outputs a 64MB uncompressed .z64 ROM.
-                             Open:          Outputs a 32MB compressed .z64 ROM.
+                             Compressed:    Outputs a 32MB compressed .z64 ROM.
                              ''')
     parser.add_argument('--bridge', default='medallions', const='medallions', nargs='?', choices=['medallions', 'vanilla', 'dungeons', 'open'],
                         help='''\
